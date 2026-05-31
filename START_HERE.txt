@@ -1,0 +1,106 @@
+📌 SAAT INI BUTUH ANDA LAKUKAN:
+
+════════════════════════════════════════════════════════════════════════════════
+1. BUKA TERMINAL
+════════════════════════════════════════════════════════════════════════════════
+
+   Windows: Buka cmd.exe atau Git Bash
+   Mac: Buka Terminal
+   Linux: Buka Terminal
+
+════════════════════════════════════════════════════════════════════════════════
+2. NAVIGATE KE PROJECT FOLDER
+════════════════════════════════════════════════════════════════════════════════
+
+   cd c:\xampp\htdocs\logistik-app
+
+════════════════════════════════════════════════════════════════════════════════
+3. PASTIKAN DOCKER CONTAINERS RUNNING
+════════════════════════════════════════════════════════════════════════════════
+
+   docker-compose up -d
+
+   Tunggu ~10 detik hingga semua containers fully initialized
+
+════════════════════════════════════════════════════════════════════════════════
+4. JALANKAN SETUP (PILIH 1)
+════════════════════════════════════════════════════════════════════════════════
+
+   ✅ OPSI 1: Windows Batch Script (EASIEST)
+      setup.bat
+
+   ✅ OPSI 2: Python Script (RECOMMENDED)
+      python run_setup.py
+
+   ✅ OPSI 3: Manual SQL Command
+      docker exec vendor-service-db mysql -u root -proot vendor_db < setup-vendor-db.sql
+
+════════════════════════════════════════════════════════════════════════════════
+5. TUNGGU SAMPAI SELESAI
+════════════════════════════════════════════════════════════════════════════════
+
+   Script akan otomatis:
+   ✓ Create jobs table
+   ✓ Create job_batches table
+   ✓ Create failed_jobs table
+   ✓ Create cache tables
+   ✓ Clear Laravel caches
+
+   Akan muncul: "✅ SETUP COMPLETED SUCCESSFULLY!"
+
+════════════════════════════════════════════════════════════════════════════════
+6. VERIFY (OPTIONAL)
+════════════════════════════════════════════════════════════════════════════════
+
+   verify-db.bat
+
+   Atau manual check:
+   docker exec vendor-service-db mysql -u root -proot vendor_db -e "SHOW TABLES;"
+
+════════════════════════════════════════════════════════════════════════════════
+7. SELESAI! 🎉
+════════════════════════════════════════════════════════════════════════════════
+
+   Error sudah fixed!
+   Coba jalankan operation yang sebelumnya error.
+
+════════════════════════════════════════════════════════════════════════════════
+
+⏱️  WAKTU TOTAL: < 2 MENIT
+
+📁 FILE YANG TERSEDIA:
+   • setup.bat                - Windows setup script
+   • run_setup.py             - Python setup script
+   • setup.sh                 - Linux/Mac setup script
+   • setup-vendor-db.sql      - SQL script
+   • verify-db.bat            - Verification script
+   • FULLSTACK_SETUP.md       - Complete guide
+   • README_SETUP.md          - Quick reference
+   • MIGRATION_FIX.md         - Detailed documentation
+
+📖 UNTUK LEBIH DETAIL, BACA:
+   • README_SETUP.md          - Quick start (5 menit)
+   • FULLSTACK_SETUP.md       - Complete guide (10 menit)
+   • MIGRATION_FIX.md         - Technical details
+
+🆘 ERROR SAAT SETUP?
+
+   "Docker not found"
+   → Install Docker: https://www.docker.com/products/docker-desktop
+
+   "Container not running"
+   → Run: docker-compose up -d
+
+   "Permission denied"
+   → Run terminal as Administrator
+
+   "MySQL error"
+   → Check: docker logs vendor-service-db
+
+════════════════════════════════════════════════════════════════════════════════
+
+STATUS: ✅ READY TO EXECUTE
+DATE: 2026-05-31
+TIME: ~30 seconds
+
+════════════════════════════════════════════════════════════════════════════════

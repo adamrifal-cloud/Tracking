@@ -1,0 +1,73 @@
+networks:
+  logistik-network:
+    driver: bridge
+
+services:
+  # =========================================================================
+  # BLOK 1: TRACKING SERVICE
+  # =========================================================================
+  tracking-app:
+    build: ./tracking-service  # <--- Docker akan nge-build dari Dockerfile tracking
+    container_name: tracking-service-app
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./tracking-service:/app
+    depends_on:
+      - tracking-db
+      - rabbitmq
+    networks:
+      - logistik-network
+
+  tracking-db:
+    image: mysql:8.0
+    container_name: tracking-service-db
+    ports:
+      - "33061:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tracking_db
+    networks:
+      - logistik-network
+
+  # =========================================================================
+  # BLOK 2: VENDOR SERVICE
+  # =========================================================================
+  vendor-app:
+    build: ./vendor-service    # <--- Docker akan nge-build dari Dockerfile vendor
+    container_name: vendor-service-app
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./vendor-service:/app
+    depends_on:
+      - vendor-db
+      - rabbitmq
+    networks:
+      - logistik-network
+
+  vendor-db:
+    image: mysql:8.0
+    container_name: vendor-service-db
+    ports:
+      - "33062:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: vendor_db
+    networks:
+      - logistik-network
+
+  # =========================================================================
+  # MESSAGE BROKER (RABBITMQ)
+  # =========================================================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: logistik-message-broker
+    ports:
+      - "5672:5672"   
+      - "15672:15672" 
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - logistik-network
