@@ -106,6 +106,10 @@ return [
         'ssl_options' => [
             'verify_peer' => false,
         ],
+        'queue' => [
+            'declare' => true,
+            'bind' => true,
+        ],
     ],
 ],
 

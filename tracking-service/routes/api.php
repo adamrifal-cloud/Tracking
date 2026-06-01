@@ -1,11 +1,12 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TrackingController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::middleware('auth')->group(function () {
+    Route::get('/v1/notifications', [NotificationController::class, 'index']);
+    Route::post('/v1/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+});
 
 Route::get('/v1/track/{order_id}', [TrackingController::class, 'checkStatus']);
