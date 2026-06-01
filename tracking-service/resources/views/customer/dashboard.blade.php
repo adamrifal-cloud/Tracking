@@ -604,16 +604,18 @@
                 setInterval(fetchNotifications, 15000);
             @endif
 
-            // Inisialisasi peta secara instan dengan koordinat Jakarta agar langsung dirender
-            initializeOrUpdateMap(-6.200000, 106.816666, true);
-
-            // Deteksi lokasi pengguna di latar belakang secara asinkron untuk memperbarui pusat peta
+            // Inisialisasi peta terpusat pada lokasi user atau Jakarta (tanpa marker/rute paket)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         initializeOrUpdateMap(position.coords.latitude, position.coords.longitude, true);
+                    },
+                    () => {
+                        initializeOrUpdateMap(-6.200000, 106.816666, true);
                     }
                 );
+            } else {
+                initializeOrUpdateMap(-6.200000, 106.816666, true);
             }
         });
 
@@ -848,7 +850,7 @@
                     document.getElementById('floatingBadge').classList.add('hidden');
                     document.getElementById('detailsCard').classList.add('hidden');
                     notFoundCard.style.display = 'block';
-                }}
+                }
                 
                 searchBtn.innerHTML = originalBtnContent;
             }, 300);
