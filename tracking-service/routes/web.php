@@ -43,6 +43,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/customer/recent-searches/clear', [App\Http\Controllers\TrackingController::class, 'clearRecentSearches'])->name('customer.recent.clear');
         Route::post('/customer/order/{order_id}/cancel', [App\Http\Controllers\OrderController::class, 'cancel'])->name('customer.order.cancel');
         Route::post('/customer/order/{order_id}/delete', [App\Http\Controllers\OrderController::class, 'destroy'])->name('customer.order.destroy');
+        
+        // Notifications API routes (using web session auth)
+        Route::get('/api/v1/notifications', [App\Http\Controllers\NotificationController::class, 'index']);
+        Route::post('/api/v1/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
     });
 
     // Driver Routes
