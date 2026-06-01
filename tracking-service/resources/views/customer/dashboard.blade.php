@@ -354,7 +354,7 @@
                         <span class="w-2.5 h-2.5 rounded-full bg-[#FB8500] animate-ping"></span>
                         Pesanan Aktif
                     </h3>
-                    <span id="res_badge_time" class="text-[10px] font-extrabold text-slate-500 bg-white/70 border border-slate-200/50 rounded-full px-3 py-1 shadow-sm uppercase tracking-wider">Diambil hari ini, 10:30</span>
+                    <span id="res_badge_time" class="text-[10px] font-extrabold text-slate-500 bg-white/70 border border-slate-200/50 rounded-full px-3 py-1 shadow-sm uppercase tracking-wider hidden">Diambil hari ini, 10:30</span>
                 </div>
 
                 <!-- Result Active Order Glass Card (Map at the Top) -->
@@ -370,7 +370,7 @@
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-transparent pointer-events-none z-10"></div>
                             
                             <!-- Floating status badge overlay -->
-                            <div class="absolute top-6 left-6 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 border border-slate-700/50 z-20">
+                            <div id="floatingBadge" class="absolute top-6 left-6 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 border border-slate-700/50 z-20 hidden">
                                 <span class="relative flex h-1.5 w-1.5">
                                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-450 opacity-75"></span>
                                   <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500"></span>
@@ -380,7 +380,7 @@
                         </div>
 
                         <!-- Result Details Content Area (Below Map) -->
-                        <div class="p-8 sm:p-10 -mt-8 relative bg-white rounded-t-[3rem] z-20 shadow-[0_-15px_30px_rgba(0,0,0,0.02)] border-t border-slate-100/50">
+                        <div id="detailsCard" class="p-8 sm:p-10 -mt-8 relative bg-white rounded-t-[3rem] z-20 shadow-[0_-15px_30px_rgba(0,0,0,0.02)] border-t border-slate-100/50 hidden">
                             
                             <!-- Status & Order Title Row -->
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b border-slate-100 pb-5 gap-3">
@@ -604,15 +604,19 @@
                 setInterval(fetchNotifications, 15000);
             @endif
 
-            // Jika user memiliki riwayat pesanan, otomatis lacak pesanan terbaru mereka dari database
-            @if(auth()->check() && isset($myOrders) && $myOrders->isNotEmpty())
-                const latestOrderId = "{{ $myOrders->first()->order_id }}";
-                document.getElementById('search_order_id').value = latestOrderId;
-                searchTracking();
-            @else
-                // Jika tidak ada pesanan, tampilkan pesanan simulasi default
-                loadDefaultSimulatedOrder();
-            @endif
+            // Inisialisasi peta terpusat pada lokasi user atau Jakarta (tanpa marker/rute paket)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        initializeOrUpdateMap(position.coords.latitude, position.coords.longitude, true);
+                    },
+                    () => {
+                        initializeOrUpdateMap(-6.200000, 106.816666, true);
+                    }
+                );
+            } else {
+                initializeOrUpdateMap(-6.200000, 106.816666, true);
+            }
         });
 
         // Custom premium toast notifications replacement for alert()
@@ -691,7 +695,7 @@
             detectAndDrawRoute();
         }
 
-        function initializeOrUpdateMap(lat, lng) {
+        function initializeOrUpdateMap(lat, lng, skipMarker = false) {
             if (!map) {
                 map = L.map('map', {
                     zoomControl: true, 
@@ -704,6 +708,16 @@
                 }).addTo(map);
             } else {
                 map.setView([lat, lng], 14);
+            }
+            
+            if (skipMarker) {
+                if (driverMarker && map.hasLayer(driverMarker)) {
+                    map.removeLayer(driverMarker);
+                }
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 100);
+                return;
             }
             
             // Marker fallback standar (jika rute aktif dinonaktifkan / akses lokasi ditolak)
@@ -727,9 +741,20 @@
             }
             
             // Invalidate map size to prevent rendering issues
-            setTimeout(() => {
-                map.invalidateSize();
+            setTimeout(() => {                map.invalidateSize();
             }, 100);
+        }
+
+        function clearMapRoutingAndMarkers() {
+            if (!map) return;
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            if (driverMarker && map.hasLayer(driverMarker)) {
+                map.removeLayer(driverMarker);
+            }
+            driverMarker = null;
         }
 
         // Search tags shortcut triggers
@@ -754,6 +779,12 @@
                 return;
             }
 
+            // Reset peta dan sembunyikan kartu detail sementara loading
+            clearMapRoutingAndMarkers();
+            document.getElementById('res_badge_time').classList.add('hidden');
+            document.getElementById('floatingBadge').classList.add('hidden');
+            document.getElementById('detailsCard').classList.add('hidden');
+            
             resultCard.classList.remove('opacity-100', 'translate-y-0');
             resultCard.classList.add('opacity-0', 'translate-y-4');
             notFoundCard.style.display = 'none';
@@ -786,10 +817,15 @@
                         if (res.data.lat && res.data.lng) {
                             // Update lokasi tujuan (Titik B) dengan data terbaru dari REST API
                             destination = [res.data.lat, res.data.lng];
-                            initializeOrUpdateMap(res.data.lat, res.data.lng);
+                            initializeOrUpdateMap(res.data.lat, res.data.lng, false);
                             // Tarik rute dinamis baru
                             detectAndDrawRoute();
                         }
+
+                        // Tampilkan kartu detail hasil pencarian
+                        document.getElementById('res_badge_time').classList.remove('hidden');
+                        document.getElementById('floatingBadge').classList.remove('hidden');
+                        document.getElementById('detailsCard').classList.remove('hidden');
 
                         // Reveal results card
                         setTimeout(() => {
@@ -797,6 +833,10 @@
                             resultCard.classList.add('opacity-100', 'translate-y-0');
                         }, 50);
                     } else {
+                        document.getElementById('res_badge_time').classList.add('hidden');
+                        document.getElementById('floatingBadge').classList.add('hidden');
+                        document.getElementById('detailsCard').classList.add('hidden');
+                        
                         notFoundCard.style.display = 'block';
                         notFoundCard.style.opacity = '0';
                         setTimeout(() => {
@@ -806,8 +846,11 @@
                     }
                 } catch (error) {
                     console.error(error);
+                    document.getElementById('res_badge_time').classList.add('hidden');
+                    document.getElementById('floatingBadge').classList.add('hidden');
+                    document.getElementById('detailsCard').classList.add('hidden');
                     notFoundCard.style.display = 'block';
-                }
+                }}
                 
                 searchBtn.innerHTML = originalBtnContent;
             }, 300);
