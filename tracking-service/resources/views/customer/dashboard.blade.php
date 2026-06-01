@@ -604,18 +604,16 @@
                 setInterval(fetchNotifications, 15000);
             @endif
 
-            // Inisialisasi peta terpusat pada lokasi user atau Jakarta (tanpa marker/rute paket)
+            // Inisialisasi peta secara instan dengan koordinat Jakarta agar langsung dirender
+            initializeOrUpdateMap(-6.200000, 106.816666, true);
+
+            // Deteksi lokasi pengguna di latar belakang secara asinkron untuk memperbarui pusat peta
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         initializeOrUpdateMap(position.coords.latitude, position.coords.longitude, true);
-                    },
-                    () => {
-                        initializeOrUpdateMap(-6.200000, 106.816666, true);
                     }
                 );
-            } else {
-                initializeOrUpdateMap(-6.200000, 106.816666, true);
             }
         });
 
