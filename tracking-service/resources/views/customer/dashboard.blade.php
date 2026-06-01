@@ -491,6 +491,17 @@
 
     <!-- Script handling dynamic layout, API & Map operations -->
     <script>
+        // Intercept and suppress the OSRM demo server console warning from Leaflet Routing Machine
+        (function() {
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes("OSRM's demo server")) {
+                    return;
+                }
+                originalWarn.apply(console, args);
+            };
+        })();
+
         let map = null;
         let driverMarker = null;
 
