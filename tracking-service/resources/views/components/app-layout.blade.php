@@ -58,6 +58,7 @@
             border-radius: 4px;
         }
     </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased text-gray-800 bg-gray-50">
     <div id="app-container" class="w-full min-h-screen flex flex-col relative overflow-x-hidden">
