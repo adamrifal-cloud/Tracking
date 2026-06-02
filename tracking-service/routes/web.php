@@ -51,9 +51,10 @@ Route::middleware('auth')->group(function () {
 
     // Driver Routes
     Route::middleware('role:DRIVER')->group(function () {
-        Route::get('/driver/dashboard', function () {
-            return view('driver.dashboard');
-        })->name('driver.dashboard');
+        Route::get('/driver/dashboard', [App\Http\Controllers\DriverController::class, 'index'])->name('driver.dashboard');
+        Route::post('/driver/task/{order_id}/claim', [App\Http\Controllers\DriverController::class, 'claimTask'])->name('driver.task.claim');
+        Route::post('/driver/task/{order_id}/update-status', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.task.updateStatus');
+        Route::post('/driver/task/{order_id}/update-location', [App\Http\Controllers\DriverController::class, 'updateLocation'])->name('driver.task.updateLocation');
     });
 });
 
