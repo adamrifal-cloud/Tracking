@@ -1,3 +1,8 @@
+@php
+    $activeTasks = $activeTasks ?? collect();
+    $completedTasks = $completedTasks ?? collect();
+    $availableTasks = $availableTasks ?? collect();
+@endphp
 <x-app-layout>
     <!-- Leaflet CSS & JS for Live Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
