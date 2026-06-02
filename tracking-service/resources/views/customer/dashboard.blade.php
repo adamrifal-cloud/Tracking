@@ -808,7 +808,7 @@
                         const stagesMap = ['Dikemas', 'Diperjalanan', 'Kurir', 'Arrived'];
                         document.getElementById('res_badge').innerText = stagesMap[res.data.stage] || res.data.status_pengiriman;
                         
-                        document.getElementById('res_driver_id').innerText = res.data.driver_id;
+                        document.getElementById('res_driver_id').innerText = res.data.driver_name || res.data.driver_id || 'Menunggu Kurir';
                         
                         const date = new Date(res.data.terakhir_diupdate);
                         document.getElementById('res_time').innerText = date.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });

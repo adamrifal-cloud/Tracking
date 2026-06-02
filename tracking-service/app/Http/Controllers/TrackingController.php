@@ -48,12 +48,29 @@ class TrackingController extends Controller
 
         $stageAndEta = $this->getTrackingStageAndEta($tracking->status, $tracking->updated_at);
 
+        // Fetch driver's actual name if available
+        $driverName = 'Menunggu Kurir';
+        if ($tracking->driver_id) {
+            if (strpos($tracking->driver_id, 'Driver-') === 0) {
+                $driverUserId = (int) substr($tracking->driver_id, 7);
+                $driverUser = DB::table('users')->where('id', $driverUserId)->first();
+                if ($driverUser) {
+                    $driverName = $driverUser->name;
+                } else {
+                    $driverName = $tracking->driver_id;
+                }
+            } else {
+                $driverName = $tracking->driver_id;
+            }
+        }
+
         // Kembalikan data status ke aplikasi pelanggan (Frontend/Mobile)
         return response()->json([
             'status' => 'Success',
             'data' => [
                 'order_id' => $tracking->order_id,
                 'driver_id' => $tracking->driver_id,
+                'driver_name' => $driverName,
                 'status_pengiriman' => $tracking->status,
                 'terakhir_diupdate' => $tracking->updated_at,
                 'stage' => $stageAndEta['stage'],
@@ -79,13 +96,13 @@ class TrackingController extends Controller
         if (strpos($statusLower, 'diterima') !== false || strpos($statusLower, 'selesai') !== false || strpos($statusLower, 'delivered') !== false) {
             $stage = 3;
             $eta = 'Paket telah diterima';
-        } elseif (strpos($statusLower, 'menuju lokasi') !== false || strpos($statusLower, 'driver terpilih') !== false || strpos($statusLower, 'meluncur') !== false || strpos($statusLower, 'pick up') !== false) {
+        } elseif (strpos($statusLower, 'menuju lokasi') !== false || strpos($statusLower, 'pick up') !== false) {
             $stage = 2;
             // Kurir menuju lokasi: ETA is 30 - 90 minutes from now
             $startEta = date('H:i', $now + 1800); // +30 mins
             $endEta = date('H:i', $now + 5400);   // +90 mins
             $eta = "Hari ini pukul {$startEta} - {$endEta}";
-        } elseif (strpos($statusLower, 'perjalanan') !== false || strpos($statusLower, 'transit') !== false || strpos($statusLower, 'kirim') !== false) {
+        } elseif (strpos($statusLower, 'perjalanan') !== false || strpos($statusLower, 'transit') !== false || strpos($statusLower, 'kirim') !== false || strpos($statusLower, 'driver terpilih') !== false || strpos($statusLower, 'meluncur') !== false) {
             $stage = 1;
             // Diperjalanan: ETA is today (e.g. 2 - 4 hours from now)
             $startEta = date('H:i', $now + 7200); // +2 hours
