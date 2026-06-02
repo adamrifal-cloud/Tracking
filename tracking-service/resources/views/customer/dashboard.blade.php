@@ -504,11 +504,10 @@
 
         let map = null;
         let driverMarker = null;
-
-        // Lokasi tujuan penerima (Titik B) - Dummy koordinat awal.
-        // Variabel ini nantinya akan diisi secara dinamis oleh data dari REST API backend Anda.
         let destination = [-6.200000, 106.816666];
         let routingControl = null;
+        let trackingInterval = null;
+        let activeTrackingOrderId = null;
 
         function detectAndDrawRoute() {
             if (!navigator.geolocation) {
@@ -775,6 +774,13 @@
             const searchBtn = document.querySelector('button[onclick="searchTracking()"]');
             const originalBtnContent = searchBtn.innerHTML;
             
+            // Clear any active tracking polling
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+            activeTrackingOrderId = null;
+            
             searchBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             
             const orderId = document.getElementById('search_order_id').value.trim();
@@ -839,7 +845,21 @@
                             resultCard.classList.remove('opacity-0', 'translate-y-4');
                             resultCard.classList.add('opacity-100', 'translate-y-0');
                         }, 50);
+
+                        // Start real-time background tracking poller
+                        activeTrackingOrderId = res.data.order_id;
+                        if (res.data.stage < 3) {
+                            if (!trackingInterval) {
+                                trackingInterval = setInterval(pollActiveTracking, 5000); // Poll every 5 seconds
+                            }
+                        }
                     } else {
+                        if (trackingInterval) {
+                            clearInterval(trackingInterval);
+                            trackingInterval = null;
+                        }
+                        activeTrackingOrderId = null;
+
                         document.getElementById('res_badge_time').classList.add('hidden');
                         document.getElementById('floatingBadge').classList.add('hidden');
                         document.getElementById('detailsCard').classList.add('hidden');
@@ -852,6 +872,12 @@
                         }, 50);
                     }
                 } catch (error) {
+                    if (trackingInterval) {
+                        clearInterval(trackingInterval);
+                        trackingInterval = null;
+                    }
+                    activeTrackingOrderId = null;
+
                     console.error(error);
                     document.getElementById('res_badge_time').classList.add('hidden');
                     document.getElementById('floatingBadge').classList.add('hidden');
@@ -861,6 +887,47 @@
                 
                 searchBtn.innerHTML = originalBtnContent;
             }, 300);
+        }
+
+        async function pollActiveTracking() {
+            if (!activeTrackingOrderId) return;
+            try {
+                const response = await fetch(`/api/v1/track/${activeTrackingOrderId}`);
+                const res = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('res_status').innerText = res.data.status_pengiriman;
+                    
+                    const stagesMap = ['Dikemas', 'Diperjalanan', 'Kurir', 'Arrived'];
+                    document.getElementById('res_badge').innerText = stagesMap[res.data.stage] || res.data.status_pengiriman;
+                    
+                    document.getElementById('res_driver_id').innerText = res.data.driver_name || res.data.driver_id || 'Menunggu Kurir';
+                    
+                    const date = new Date(res.data.terakhir_diupdate);
+                    document.getElementById('res_time').innerText = date.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+                    document.getElementById('res_badge_time').innerText = `Update: ${date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+                    document.getElementById('res_eta').innerText = `${res.data.eta}`;
+
+                    updateTimeline(res.data.stage);
+
+                    // Update Map & Routing secara dinamis
+                    if (res.data.lat && res.data.lng) {
+                        destination = [res.data.lat, res.data.lng];
+                        initializeOrUpdateMap(res.data.lat, res.data.lng, false);
+                        detectAndDrawRoute();
+                    }
+
+                    // Stop polling if order has arrived
+                    if (res.data.stage === 3) {
+                        clearInterval(trackingInterval);
+                        trackingInterval = null;
+                        activeTrackingOrderId = null;
+                        showToast('Paket Anda telah sampai! Terima kasih telah menggunakan layanan kami.', 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('Error polling tracking status:', error);
+            }
         }
 
         function updateTimeline(stage) {
