@@ -82,7 +82,7 @@ class DriverController extends Controller
                     'user_id' => $order->user_id,
                     'title' => 'Kurir Ditugaskan',
                     'body' => "Kurir " . Auth::user()->name . " telah mengambil tugas pengiriman #{$order->order_id} Anda dan sedang bersiap meluncur.",
-                    'is_read' => false,
+                    'read_at' => null,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -127,7 +127,7 @@ class DriverController extends Controller
                     'user_id' => $order->user_id,
                     'title' => $title,
                     'body' => "Paket #{$order->order_id} Anda berstatus: {$status}.",
-                    'is_read' => false,
+                    'read_at' => null,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

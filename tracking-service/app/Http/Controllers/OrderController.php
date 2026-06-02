@@ -122,7 +122,7 @@ class OrderController extends Controller
             'user_id' => Auth::id(),
             'title' => 'Pembayaran Berhasil',
             'body' => "Pembayaran untuk order #{$order->order_id} berhasil diterima. Paket Anda sedang dikemas.",
-            'is_read' => false,
+            'read_at' => null,
         ]);
 
         return redirect()->route('track')
@@ -149,7 +149,7 @@ class OrderController extends Controller
             'user_id' => Auth::id(),
             'title' => 'Pesanan Dibatalkan',
             'body' => "Pesanan #{$order->order_id} berhasil dibatalkan.",
-            'is_read' => false,
+            'read_at' => null,
         ]);
 
         return redirect()->route('track')
