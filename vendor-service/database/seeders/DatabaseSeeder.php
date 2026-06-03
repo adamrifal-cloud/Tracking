@@ -15,11 +15,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Default Admin
+        User::firstOrCreate(
+            ['email' => 'admin@vendor.com'],
+            [
+                'name' => 'System Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+                'role' => User::ROLE_ADMIN,
+                'status' => 'active',
+            ]
+        );
     }
 }

@@ -1,22 +1,39 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Jobs\SendDriverAllocation;
 
-Route::get('/allocate', function () {
-    return view('allocate');
+// Redirect root to dashboard (which redirects to login if unauthenticated)
+Route::get('/', function () {
+    return redirect()->route('dashboard');
 });
 
-Route::get('/test-kirim', function () {
-    $dataDummy = [
-        'order_id' => 'ORD-' . rand(1000, 9999),
-        'driver_id' => 7,
-        'driver_name' => 'Anto Kurir Kilat',
-        'vendor_name' => 'PT Trans Logistik'
-    ];
+// Auth Routes (Guest)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+});
 
-    // Tentukan nama antrean 'driver-allocations' di sini secara aman
-    dispatch(new SendDriverAllocation($dataDummy))->onQueue('driver-allocations');
+// Protected Routes (Admin / Vendor)
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    return "Data Driver sukses dikirim ke RabbitMQ!";
+    Route::get('/dashboard', function () {
+        return view('dashboard'); // We will create this view
+    })->name('dashboard');
+
+    // API to send the job
+    Route::post('/allocate', function (\Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'order_id' => 'required|string',
+            'driver_id' => 'required|integer',
+            'driver_name' => 'required|string',
+            'vendor_name' => 'required|string',
+        ]);
+
+        dispatch(new SendDriverAllocation($validated))->onQueue('driver-allocations');
+
+        return response()->json(['message' => 'Tugas ' . $validated['order_id'] . ' berhasil dikirim ke antrean kurir.']);
+    })->name('allocate.post');
 });
