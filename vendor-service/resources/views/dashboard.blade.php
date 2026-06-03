@@ -155,8 +155,10 @@
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Allocation Form -->
+            <!-- Dynamic Role-Based Panel -->
             <div class="lg:col-span-1">
+                @if(Auth::user()->isAdmin())
+                <!-- Allocation Form (Admin Logistik Only) -->
                 <div class="glass-card rounded-2xl p-6 h-full relative overflow-hidden">
                     <!-- Glow effect -->
                     <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500 rounded-full mix-blend-screen filter blur-[50px] opacity-20"></div>
@@ -195,6 +197,42 @@
                         </div>
                     </form>
                 </div>
+                @else
+                <!-- Vendor Management Panel (Vendor Only) -->
+                <div class="glass-card rounded-2xl p-6 h-full relative overflow-hidden">
+                    <!-- Glow effect -->
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500 rounded-full mix-blend-screen filter blur-[50px] opacity-10"></div>
+                    
+                    <h2 class="text-xl font-bold text-white mb-2">Vendor Management</h2>
+                    <p class="text-sm text-gray-400 mb-6">Kelola Profil, Supplier, dan Verifikasi Dokumen Perusahaan Anda.</p>
+                    
+                    <div class="space-y-4 relative z-10">
+                        <button class="w-full text-left px-5 py-4 rounded-xl bg-brand-800/50 hover:bg-brand-700/50 border border-brand-700 transition-all group flex items-center justify-between">
+                            <div>
+                                <h3 class="text-white font-semibold group-hover:text-brand-400 transition-colors">Kelola Profil Vendor</h3>
+                                <p class="text-xs text-gray-400 mt-1">Perbarui detail perusahaan dan kontak</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+
+                        <button class="w-full text-left px-5 py-4 rounded-xl bg-brand-800/50 hover:bg-brand-700/50 border border-brand-700 transition-all group flex items-center justify-between">
+                            <div>
+                                <h3 class="text-white font-semibold group-hover:text-brand-400 transition-colors">Kelola Data Supplier</h3>
+                                <p class="text-xs text-gray-400 mt-1">Daftar mitra pasokan logistik</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+
+                        <button class="w-full text-left px-5 py-4 rounded-xl bg-brand-800/50 hover:bg-brand-700/50 border border-brand-700 transition-all group flex items-center justify-between">
+                            <div>
+                                <h3 class="text-white font-semibold group-hover:text-brand-400 transition-colors">Verifikasi Dokumen</h3>
+                                <p class="text-xs text-gray-400 mt-1">Unggah SIUP, TDP, & Dokumen Legal</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <!-- Recent Activity / Logs -->
