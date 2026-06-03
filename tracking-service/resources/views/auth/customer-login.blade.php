@@ -16,9 +16,21 @@
 
             <!-- The Logo -->
             <div class="logo-s mb-6 relative z-10 scale-90 md:scale-110">
-                <div class="absolute -top-3 -right-3 w-8 h-8 md:w-10 md:h-10 text-[#E63946] flex items-center justify-center animate-bounce">
-                    <svg class="w-full h-full drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
-                </div>
+                <svg class="w-[120px] h-[120px] pin-icon drop-shadow-md" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Semicircles Group -->
+                    <g transform="translate(50, 50) rotate(-45)">
+                        <!-- Top-Left Semicircle -->
+                        <path d="M -40 0 A 40 40 0 0 1 40 0 Z" fill="#FFFFFF" transform="translate(0, -5)" />
+                        <!-- Bottom-Right Semicircle -->
+                        <path d="M -40 0 A 40 40 0 0 0 40 0 Z" fill="#FFFFFF" transform="translate(0, 5)" />
+                    </g>
+                    <!-- Map Pin Group -->
+                    <g transform="translate(50, 50)">
+                        <circle cx="0" cy="0" r="16" fill="#FFC107" />
+                        <polygon points="-13.8,8 13.8,8 0,32" fill="#FFC107" />
+                        <circle cx="0" cy="0" r="6.5" fill="#FF0000" />
+                    </g>
+                </svg>
             </div>
 
             <div class="hidden md:block text-center text-white mt-8 z-10">

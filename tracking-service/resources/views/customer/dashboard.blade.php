@@ -92,6 +92,94 @@
         .leaflet-routing-container {
             display: none !important;
         }
+
+        /* DARK MODE CSS OVERRIDES (To work without recompiling Tailwind) */
+        html.dark-theme body,
+        html.dark-theme .leaflet-container {
+            background-color: #0f172a !important;
+        }
+        html.dark-theme .bg-white,
+        html.dark-theme .bg-white\/30,
+        html.dark-theme .bg-white\/60,
+        html.dark-theme .bg-white\/70,
+        html.dark-theme .bg-white\/80 {
+            background-color: #1e293b !important;
+            border-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        html.dark-theme .text-slate-900,
+        html.dark-theme .text-slate-800,
+        html.dark-theme .text-slate-700,
+        html.dark-theme .text-slate-650,
+        html.dark-theme .text-slate-600 {
+            color: #f8fafc !important;
+        }
+        html.dark-theme .text-slate-500,
+        html.dark-theme .text-slate-400 {
+            color: #94a3b8 !important;
+        }
+        html.dark-theme .border-slate-100,
+        html.dark-theme .border-slate-200,
+        html.dark-theme .border-slate-200\/40,
+        html.dark-theme .border-slate-200\/50,
+        html.dark-theme .border-slate-200\/60,
+        html.dark-theme .border-slate-100\/50 {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        html.dark-theme .bg-slate-50,
+        html.dark-theme .bg-slate-100,
+        html.dark-theme .bg-slate-50\/50,
+        html.dark-theme .hover\:bg-slate-50:hover,
+        html.dark-theme .hover\:bg-slate-100:hover {
+            background-color: #334155 !important;
+        }
+        html.dark-theme .bg-emerald-50,
+        html.dark-theme .bg-emerald-100,
+        html.dark-theme .bg-emerald-50\/50 {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+            border-color: rgba(16, 185, 129, 0.2) !important;
+        }
+        html.dark-theme .text-emerald-700,
+        html.dark-theme .text-emerald-600 {
+            color: #34d399 !important;
+        }
+        html.dark-theme .bg-amber-50 {
+            background-color: rgba(245, 158, 11, 0.1) !important;
+            border-color: rgba(245, 158, 11, 0.2) !important;
+        }
+        html.dark-theme .text-amber-600 {
+            color: #fbbf24 !important;
+        }
+        html.dark-theme .bg-indigo-50 {
+            background-color: rgba(99, 102, 241, 0.1) !important;
+            border-color: rgba(99, 102, 241, 0.2) !important;
+        }
+        html.dark-theme .text-indigo-600 {
+            color: #818cf8 !important;
+        }
+        html.dark-theme .bg-rose-50 {
+            background-color: rgba(244, 63, 94, 0.1) !important;
+            border-color: rgba(244, 63, 94, 0.2) !important;
+        }
+        html.dark-theme .text-rose-600 {
+            color: #fb7185 !important;
+        }
+        html.dark-theme .shadow-sm,
+        html.dark-theme .shadow-md,
+        html.dark-theme .shadow-lg,
+        html.dark-theme .shadow-\[0_20px_50px_rgba\(0\,0\,0\,0\.06\)\] {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+        }
+        html.dark-theme select,
+        html.dark-theme input,
+        html.dark-theme textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        html.dark-theme select option {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
     </style>
 
     <!-- Top Navigation Bar -->
@@ -107,6 +195,12 @@
 
         <div class="flex items-center gap-2">
             @auth
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-100 transition duration-200 text-slate-600 focus:outline-none shrink-0" title="Ubah Tema Gelap/Terang">
+                    <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
+                    <svg id="moonIcon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+                </button>
+
                 <!-- Notification Button & Dropdown -->
                 <div class="relative shrink-0 flex items-center justify-center" style="width: 40px; height: 40px; min-width: 40px; min-height: 40px; max-width: 40px; max-height: 40px;">
                     <button id="notifBtn" onclick="toggleNotifications()" class="relative rounded-full bg-white border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-800 hover:shadow-md transition duration-300 cursor-pointer shrink-0" style="width: 40px; height: 40px; min-width: 40px; min-height: 40px; max-width: 40px; max-height: 40px;">
@@ -353,8 +447,20 @@
                     <span id="res_badge_time" class="text-[10px] font-extrabold text-slate-500 bg-white/70 border border-slate-200/50 rounded-full px-3 py-1 shadow-sm uppercase tracking-wider hidden">Diambil hari ini, 10:30</span>
                 </div>
 
+                <!-- Empty State Card (Initial Load) -->
+                <div id="emptyStateCard" class="bg-white/80 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 border border-slate-200/60 shadow-[0_15px_40px_rgba(0,0,0,0.05)] h-full min-h-[350px] sm:min-h-[450px] flex flex-col justify-center items-center text-center transition-colors duration-300 w-full mt-4">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-orange-100 to-orange-50 text-[#FB8500] flex items-center justify-center shadow-inner mb-6 sm:mb-8 border border-orange-200/50">
+                        <span class="absolute flex h-20 w-20 sm:h-24 sm:w-24">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-20"></span>
+                        </span>
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 relative z-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-2 sm:mb-3 tracking-tight">Lacak Pengiriman...</h3>
+                    <p class="text-slate-500 text-xs sm:text-sm font-medium max-w-[280px] sm:max-w-sm leading-relaxed">Sistem pelacakan GPS siap digunakan. Silakan masukkan nomor resi Anda untuk melihat rute pengiriman.</p>
+                </div>
+
                 <!-- Result Active Order Glass Card (Map at the Top) -->
-                <div id="resultCard" class="w-full transition-all duration-700 opacity-100 transform translate-y-0">
+                <div id="resultCard" class="hidden w-full transition-all duration-700 opacity-0 transform translate-y-4">
                     
                     <div class="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-slate-200/40">
                         
@@ -450,12 +556,12 @@
                             <!-- Active Driver and Log update info -->
                             <div class="p-5 bg-slate-50 border border-slate-200/50 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-indigo-50/60 text-indigo-650 flex items-center justify-center shrink-0 border border-slate-200/40">
-                                        <svg class="w-5.5 h-5.5 text-indigo-650" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                                    <div id="res_driver_icon_wrap" class="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-indigo-50/60 text-indigo-650 flex items-center justify-center shrink-0 border border-slate-200/40 transition-colors duration-300">
+                                        <svg id="res_driver_icon" class="w-5.5 h-5.5 text-indigo-650" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
                                     </div>
                                     <div class="text-left">
-                                        <span class="text-[8px] font-bold text-slate-450 uppercase tracking-widest leading-none block">Kurir Ditugaskan</span>
-                                        <h5 class="text-xs font-black text-slate-800 mt-1" id="res_driver_id">Driver Arief Setiawan</h5>
+                                        <span class="text-[8px] font-bold text-slate-450 uppercase tracking-widest leading-none block" id="res_driver_label">Kurir Ditugaskan</span>
+                                        <h5 class="text-xs font-black text-slate-800 mt-1 flex items-center gap-1.5" id="res_driver_id">Driver Arief Setiawan</h5>
                                     </div>
                                 </div>
                                 <div class="text-left sm:text-right shrink-0">
@@ -491,6 +597,30 @@
 
     <!-- Script handling dynamic layout, API & Map operations -->
     <script>
+        // === Dark Mode Logic ===
+        function toggleDarkMode() {
+            const htmlEl = document.documentElement;
+            if (htmlEl.classList.contains('dark-theme')) {
+                htmlEl.classList.remove('dark-theme');
+                localStorage.setItem('customerTheme', 'light');
+                document.getElementById('sunIcon').classList.add('hidden');
+                document.getElementById('moonIcon').classList.remove('hidden');
+            } else {
+                htmlEl.classList.add('dark-theme');
+                localStorage.setItem('customerTheme', 'dark');
+                document.getElementById('moonIcon').classList.add('hidden');
+                document.getElementById('sunIcon').classList.remove('hidden');
+            }
+        }
+
+        // Init Dark Mode from LocalStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('customerTheme') === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+                document.getElementById('moonIcon').classList.add('hidden');
+                document.getElementById('sunIcon').classList.remove('hidden');
+            }
+        });
         // Intercept and suppress the OSRM demo server console warning from Leaflet Routing Machine
         (function() {
             const originalWarn = console.warn;
@@ -786,6 +916,7 @@
             const orderId = document.getElementById('search_order_id').value.trim();
             const resultCard = document.getElementById('resultCard');
             const notFoundCard = document.getElementById('notFoundCard');
+            const emptyStateCard = document.getElementById('emptyStateCard');
 
             if(!orderId) {
                 searchBtn.innerHTML = originalBtnContent;
@@ -804,7 +935,7 @@
 
             setTimeout(async () => {
                 try {
-                    const response = await fetch(`/api/v1/track/${orderId}`);
+                    const response = await fetch(`/track/status/${orderId}`);
                     const res = await response.json();
 
                     if (response.ok) {
@@ -814,7 +945,26 @@
                         const stagesMap = ['Dikemas', 'Diperjalanan', 'Kurir', 'Arrived'];
                         document.getElementById('res_badge').innerText = stagesMap[res.data.stage] || res.data.status_pengiriman;
                         
-                        document.getElementById('res_driver_id').innerText = res.data.driver_name || res.data.driver_id || 'Menunggu Kurir';
+                        
+                        if (res.data.driver_name || res.data.driver_id) {
+                            document.getElementById('res_driver_label').innerText = 'Kurir Ditugaskan';
+                            document.getElementById('res_driver_id').innerHTML = res.data.driver_name || res.data.driver_id;
+                            
+                            // Indigo assigned state
+                            document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-indigo-50/60 text-indigo-650 flex items-center justify-center shrink-0 border border-slate-200/40 transition-colors duration-300';
+                            document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />';
+                            document.getElementById('res_driver_icon').classList.remove('animate-spin', 'text-amber-500');
+                            document.getElementById('res_driver_icon').classList.add('text-indigo-650');
+                        } else {
+                            document.getElementById('res_driver_label').innerText = 'Status Penugasan';
+                            document.getElementById('res_driver_id').innerHTML = '<span class="text-amber-600 font-extrabold flex items-center gap-1.5">Mencari Kurir... <span class="flex h-1.5 w-1.5 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span></span></span>';
+                            
+                            // Amber searching state
+                            document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-amber-50/60 text-amber-500 flex items-center justify-center shrink-0 border border-amber-200/40 transition-colors duration-300';
+                            document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />';
+                            document.getElementById('res_driver_icon').classList.remove('text-indigo-650');
+                            document.getElementById('res_driver_icon').classList.add('animate-spin', 'text-amber-500');
+                        }
                         
                         const date = new Date(res.data.terakhir_diupdate);
                         document.getElementById('res_time').innerText = date.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
@@ -826,6 +976,14 @@
                         // Update Timeline Stages
                         updateTimeline(res.data.stage);
 
+                        // Tampilkan kartu detail hasil pencarian
+                        document.getElementById('res_badge_time').classList.remove('hidden');
+                        document.getElementById('floatingBadge').classList.remove('hidden');
+                        document.getElementById('detailsCard').classList.remove('hidden');
+                        
+                        if(emptyStateCard) emptyStateCard.classList.add('hidden');
+                        resultCard.classList.remove('hidden');
+
                         // Update Map & Routing secara dinamis
                         if (res.data.lat && res.data.lng) {
                             // Update lokasi tujuan (Titik B) dengan data terbaru dari REST API
@@ -835,15 +993,11 @@
                             detectAndDrawRoute();
                         }
 
-                        // Tampilkan kartu detail hasil pencarian
-                        document.getElementById('res_badge_time').classList.remove('hidden');
-                        document.getElementById('floatingBadge').classList.remove('hidden');
-                        document.getElementById('detailsCard').classList.remove('hidden');
-
                         // Reveal results card
                         setTimeout(() => {
                             resultCard.classList.remove('opacity-0', 'translate-y-4');
                             resultCard.classList.add('opacity-100', 'translate-y-0');
+                            if(map) map.invalidateSize();
                         }, 50);
 
                         // Start real-time background tracking poller
@@ -892,7 +1046,7 @@
         async function pollActiveTracking() {
             if (!activeTrackingOrderId) return;
             try {
-                const response = await fetch(`/api/v1/track/${activeTrackingOrderId}`);
+                const response = await fetch(`/track/status/${activeTrackingOrderId}`);
                 const res = await response.json();
 
                 if (response.ok) {
@@ -901,7 +1055,24 @@
                     const stagesMap = ['Dikemas', 'Diperjalanan', 'Kurir', 'Arrived'];
                     document.getElementById('res_badge').innerText = stagesMap[res.data.stage] || res.data.status_pengiriman;
                     
-                    document.getElementById('res_driver_id').innerText = res.data.driver_name || res.data.driver_id || 'Menunggu Kurir';
+                    
+                    if (res.data.driver_name || res.data.driver_id) {
+                        document.getElementById('res_driver_label').innerText = 'Kurir Ditugaskan';
+                        document.getElementById('res_driver_id').innerHTML = res.data.driver_name || res.data.driver_id;
+                        
+                        document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-indigo-50/60 text-indigo-650 flex items-center justify-center shrink-0 border border-slate-200/40 transition-colors duration-300';
+                        document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />';
+                        document.getElementById('res_driver_icon').classList.remove('animate-spin', 'text-amber-500');
+                        document.getElementById('res_driver_icon').classList.add('text-indigo-650');
+                    } else {
+                        document.getElementById('res_driver_label').innerText = 'Status Penugasan';
+                        document.getElementById('res_driver_id').innerHTML = '<span class="text-amber-600 font-extrabold flex items-center gap-1.5">Mencari Kurir... <span class="flex h-1.5 w-1.5 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span></span></span>';
+                        
+                        document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-amber-50/60 text-amber-500 flex items-center justify-center shrink-0 border border-amber-200/40 transition-colors duration-300';
+                        document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />';
+                        document.getElementById('res_driver_icon').classList.remove('text-indigo-650');
+                        document.getElementById('res_driver_icon').classList.add('animate-spin', 'text-amber-500');
+                    }
                     
                     const date = new Date(res.data.terakhir_diupdate);
                     document.getElementById('res_time').innerText = date.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });

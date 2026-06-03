@@ -43,10 +43,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/customer/recent-searches/clear', [App\Http\Controllers\TrackingController::class, 'clearRecentSearches'])->name('customer.recent.clear');
         Route::post('/customer/order/{order_id}/cancel', [App\Http\Controllers\OrderController::class, 'cancel'])->name('customer.order.cancel');
         Route::post('/customer/order/{order_id}/delete', [App\Http\Controllers\OrderController::class, 'destroy'])->name('customer.order.destroy');
-        
-        // Notifications API routes (using web session auth)
-        Route::get('/api/v1/notifications', [App\Http\Controllers\NotificationController::class, 'index']);
-        Route::post('/api/v1/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
     });
 
     // Driver Routes
@@ -55,7 +51,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/driver/task/{order_id}/claim', [App\Http\Controllers\DriverController::class, 'claimTask'])->name('driver.task.claim');
         Route::post('/driver/task/{order_id}/update-status', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.task.updateStatus');
         Route::post('/driver/task/{order_id}/update-location', [App\Http\Controllers\DriverController::class, 'updateLocation'])->name('driver.task.updateLocation');
+        Route::post('/driver/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('driver.profile.update');
     });
+
+    // Shared APIs (Customer & Driver)
+    Route::get('/api/v1/notifications', [App\Http\Controllers\NotificationController::class, 'index']);
+    Route::post('/api/v1/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
 });
 
 Route::post('/api/v1/orders', function (Illuminate\Http\Request $request) {
@@ -65,7 +66,7 @@ Route::post('/api/v1/orders', function (Illuminate\Http\Request $request) {
     // Insert into trackings database
     \Illuminate\Support\Facades\DB::table('trackings')->insert([
         'order_id' => $orderId,
-        'driver_id' => 'Driver-' . mt_rand(10, 99),
+        'driver_id' => null,
         'status' => $status,
         'terakhir_diupdate' => now(),
         'created_at' => now(),
@@ -89,3 +90,4 @@ Route::post('/api/v1/orders', function (Illuminate\Http\Request $request) {
 });
 
 Route::get('/track-order', [App\Http\Controllers\TrackingController::class, 'index'])->name('track');
+Route::get('/track/status/{order_id}', [App\Http\Controllers\TrackingController::class, 'checkStatus'])->name('track.status');

@@ -104,7 +104,7 @@ class OrderController extends Controller
         // Initialize Tracking Service for this order with coordinates stored in database
         Tracking::create([
             'order_id' => $order->order_id,
-            'driver_id' => 'Driver-' . mt_rand(10, 99), // Dummy driver assigned automatically
+            'driver_id' => null, // No driver assigned yet
             'status' => 'Dikemas',
             'latitude' => -6.200000 + (mt_rand(-100, 100) / 10000),
             'longitude' => 106.816666 + (mt_rand(-100, 100) / 10000),

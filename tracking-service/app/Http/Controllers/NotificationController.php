@@ -30,39 +30,54 @@ class NotificationController extends Controller
 
         // If user has no notifications, dynamically generate relevant/realistic notifications
         if ($notifications->count() === 0) {
-            $orders = \App\Models\Order::where('user_id', $user->id)->get();
-            if ($orders->count() > 0) {
-                foreach ($orders as $order) {
-                    Notification::create([
-                        'user_id' => $user->id,
-                        'title' => 'Pembayaran Berhasil',
-                        'body' => "Pembayaran untuk order #{$order->order_id} berhasil diterima. Paket Anda sedang diproses.",
-                        'created_at' => $order->created_at,
-                    ]);
-
-                    if ($order->payment_status === 'PAID') {
+            if ($user->role === 'DRIVER') {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'title' => 'Selamat Bertugas!',
+                    'body' => 'Sistem telah aktif. Utamakan keselamatan berkendara dan pastikan paket sampai ke tangan pelanggan dengan aman.',
+                    'created_at' => now()->subHours(1),
+                ]);
+                Notification::create([
+                    'user_id' => $user->id,
+                    'title' => 'Pemantauan GPS Aktif',
+                    'body' => 'Pastikan Anda menekan tombol "Simulasikan GPS" atau memperbarui lokasi secara berkala agar pelanggan dapat melacak pengiriman.',
+                    'created_at' => now()->subMinutes(30),
+                ]);
+            } else {
+                $orders = \App\Models\Order::where('user_id', $user->id)->get();
+                if ($orders->count() > 0) {
+                    foreach ($orders as $order) {
                         Notification::create([
                             'user_id' => $user->id,
-                            'title' => 'Kurir Ditugaskan',
-                            'body' => "Kurir Driver-" . mt_rand(10, 99) . " sedang menjemput paket #{$order->order_id} Anda.",
-                            'created_at' => $order->created_at->addMinutes(5),
+                            'title' => 'Pembayaran Berhasil',
+                            'body' => "Pembayaran untuk order #{$order->order_id} berhasil diterima. Paket Anda sedang diproses.",
+                            'created_at' => $order->created_at,
                         ]);
+
+                        if ($order->payment_status === 'PAID') {
+                            Notification::create([
+                                'user_id' => $user->id,
+                                'title' => 'Kurir Ditugaskan',
+                                'body' => "Kurir Driver-" . mt_rand(10, 99) . " sedang menjemput paket #{$order->order_id} Anda.",
+                                'created_at' => $order->created_at->addMinutes(5),
+                            ]);
+                        }
                     }
+                } else {
+                    // Welcome notifications for new accounts with no orders
+                    Notification::create([
+                        'user_id' => $user->id,
+                        'title' => 'Selamat Datang di TrackIT!',
+                        'body' => 'Selamat bergabung! Mulailah membuat pengiriman baru dengan menekan tombol plus (+) di bawah.',
+                        'created_at' => now()->subHours(2),
+                    ]);
+                    Notification::create([
+                        'user_id' => $user->id,
+                        'title' => 'Layanan Lacak GPS Aktif',
+                        'body' => 'Sistem live GPS sekarang aktif secara real-time. Anda bisa memantau pergerakan kurir di peta.',
+                        'created_at' => now()->subHour(),
+                    ]);
                 }
-            } else {
-                // Welcome notifications for new accounts with no orders
-                Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Selamat Datang di TrackIT!',
-                    'body' => 'Selamat bergabung! Mulailah membuat pengiriman baru dengan menekan tombol plus (+) di bawah.',
-                    'created_at' => now()->subHours(2),
-                ]);
-                Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Layanan Lacak GPS Aktif',
-                    'body' => 'Sistem live GPS sekarang aktif secara real-time. Anda bisa memantau pergerakan kurir di peta.',
-                    'created_at' => now()->subHour(),
-                ]);
             }
 
             // Fetch again after dynamic seeding
