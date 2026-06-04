@@ -12,5 +12,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
+# Install dependencies saat build, bukan saat runtime
+RUN composer install --no-dev --optimize-autoloader
+
 # Perintah otomatis saat container dihidupkan
-CMD composer install && php artisan serve --host=0.0.0.0 --port=8000
+CMD php artisan serve --host=0.0.0.0 --port=8000

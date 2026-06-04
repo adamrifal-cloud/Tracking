@@ -7,7 +7,7 @@ services:
   # BLOK 1: TRACKING SERVICE
   # =========================================================================
   tracking-app:
-    build: ./tracking-service  # <--- Docker akan nge-build dari Dockerfile tracking
+    build: ./tracking-service
     container_name: tracking-service-app
     ports:
       - "8001:8000"
@@ -15,8 +15,10 @@ services:
     volumes:
       - ./tracking-service:/app
     depends_on:
-      - tracking-db
-      - rabbitmq
+      tracking-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - logistik-network
 
@@ -28,6 +30,13 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: tracking_db
+      MYSQL_INITIALIZATON_FILES_PATH: /docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+      start_period: 15s
     networks:
       - logistik-network
 
@@ -35,15 +44,17 @@ services:
   # BLOK 2: VENDOR SERVICE
   # =========================================================================
   vendor-app:
-    build: ./vendor-service    # <--- Docker akan nge-build dari Dockerfile vendor
+    build: ./vendor-service
     container_name: vendor-service-app
     ports:
       - "8002:8000"
     volumes:
       - ./vendor-service:/app
     depends_on:
-      - vendor-db
-      - rabbitmq
+      vendor-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - logistik-network
 
@@ -55,6 +66,12 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: vendor_db
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+      start_period: 15s
     networks:
       - logistik-network
 

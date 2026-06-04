@@ -4,9 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Jobs\SendDriverAllocation;
 
-// Redirect root to dashboard (which redirects to login if unauthenticated)
+// Redirect root to dashboard based on role
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    if (auth()->check()) {
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('vendor.dashboard');
+    }
+    return redirect()->route('login');
 });
 
 // Auth Routes (Guest)
@@ -19,9 +25,11 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/dashboard', function () {
-        return view('dashboard'); // We will create this view
-    })->name('dashboard');
+    // Admin Routes
+    Route::get('/admin/dashboard', [App\Http\Controllers\AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    
+    // Vendor Routes
+    Route::get('/vendor/dashboard', [App\Http\Controllers\VendorDashboardController::class, 'index'])->name('vendor.dashboard');
 
     // API to send the job
     Route::post('/allocate', function (\Illuminate\Http\Request $request) {

@@ -53,7 +53,10 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended('/dashboard');
+            if ($user->isAdmin()) {
+                return redirect()->intended(route('admin.dashboard'));
+            }
+            return redirect()->intended(route('vendor.dashboard'));
         }
 
         throw ValidationException::withMessages([
