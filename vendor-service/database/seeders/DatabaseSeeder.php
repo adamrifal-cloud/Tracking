@@ -25,5 +25,16 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        // Default Vendor
+        User::firstOrCreate(
+            ['email' => 'mitra@vendor.com'],
+            [
+                'name' => 'PT. Logistik Maju Jaya',
+                'password' => \Illuminate\Support\Facades\Hash::make('vendor123'),
+                'role' => User::ROLE_VENDOR,
+                'status' => 'active',
+            ]
+        );
     }
 }
