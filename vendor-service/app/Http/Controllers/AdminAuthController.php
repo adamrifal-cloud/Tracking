@@ -7,18 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-class AuthController extends Controller
+class AdminAuthController extends Controller
 {
     /**
      * Show Admin Login Form
      */
     public function showLogin()
     {
-        return view('auth.login');
+        return view('admin.login');
     }
 
     /**
-     * Handle Login
+     * Handle Admin Login
      */
     public function login(Request $request)
     {
@@ -30,14 +30,13 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
-            // Validate that the user is an admin or vendor
-            if (!in_array($user->role, [User::ROLE_ADMIN, User::ROLE_VENDOR])) {
+            if ($user->role !== User::ROLE_ADMIN) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
                 throw ValidationException::withMessages([
-                    'email' => 'This account does not have access to the Vendor Portal.',
+                    'email' => 'Akun ini tidak memiliki akses ke Portal Admin.',
                 ]);
             }
 
@@ -47,25 +46,22 @@ class AuthController extends Controller
                 $request->session()->regenerateToken();
 
                 throw ValidationException::withMessages([
-                    'email' => 'Your account is inactive.',
+                    'email' => 'Akun admin Anda tidak aktif.',
                 ]);
             }
 
             $request->session()->regenerate();
 
-            if ($user->isAdmin()) {
-                return redirect()->intended(route('admin.dashboard'));
-            }
-            return redirect()->intended(route('vendor.dashboard'));
+            return redirect()->intended(route('admin.dashboard'));
         }
 
         throw ValidationException::withMessages([
-            'email' => 'The provided credentials do not match our records.',
+            'email' => 'Kredensial yang diberikan tidak cocok dengan catatan kami.',
         ]);
     }
 
     /**
-     * Handle Logout
+     * Handle Admin Logout
      */
     public function logout(Request $request)
     {
@@ -74,6 +70,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('admin.login');
     }
 }

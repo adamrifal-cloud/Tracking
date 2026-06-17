@@ -904,10 +904,9 @@
             const searchBtn = document.querySelector('button[onclick="searchTracking()"]');
             const originalBtnContent = searchBtn.innerHTML;
             
-            // Clear any active tracking polling
-            if (trackingInterval) {
-                clearInterval(trackingInterval);
-                trackingInterval = null;
+            // Leave any active WebSocket channels
+            if (window.Echo && activeTrackingOrderId) {
+                window.Echo.leave('order.' + activeTrackingOrderId);
             }
             activeTrackingOrderId = null;
             
@@ -1000,17 +999,51 @@
                             if(map) map.invalidateSize();
                         }, 50);
 
-                        // Start real-time background tracking poller
+                        // Start real-time background WebSockets listener
                         activeTrackingOrderId = res.data.order_id;
-                        if (res.data.stage < 3) {
-                            if (!trackingInterval) {
-                                trackingInterval = setInterval(pollActiveTracking, 5000); // Poll every 5 seconds
-                            }
+                        if (res.data.stage < 3 && window.Echo) {
+                            window.Echo.channel('order.' + activeTrackingOrderId)
+                                .listen('.OrderLocationUpdated', (e) => {
+                                    document.getElementById('res_status').innerText = e.status;
+                                    
+                                    const stagesMap = ['Dikemas', 'Diperjalanan', 'Kurir', 'Arrived'];
+                                    document.getElementById('res_badge').innerText = stagesMap[e.stage] || e.status;
+                                    
+                                    if (e.driverName) {
+                                        document.getElementById('res_driver_label').innerText = 'Kurir Ditugaskan';
+                                        document.getElementById('res_driver_id').innerHTML = e.driverName;
+                                        
+                                        document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-indigo-50/60 text-indigo-650 flex items-center justify-center shrink-0 border border-slate-200/40 transition-colors duration-300';
+                                        document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />';
+                                        document.getElementById('res_driver_icon').classList.remove('animate-spin', 'text-amber-500');
+                                        document.getElementById('res_driver_icon').classList.add('text-indigo-650');
+                                    }
+                                    
+                                    const date = new Date(e.updatedAt);
+                                    document.getElementById('res_time').innerText = date.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+                                    document.getElementById('res_badge_time').innerText = `Update: ${date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+                                    document.getElementById('res_eta').innerText = e.eta;
+
+                                    updateTimeline(e.stage);
+
+                                    // Update Map & Routing secara dinamis
+                                    if (e.latitude && e.longitude) {
+                                        destination = [e.latitude, e.longitude];
+                                        initializeOrUpdateMap(e.latitude, e.longitude, false);
+                                        detectAndDrawRoute();
+                                    }
+
+                                    // Stop listening if order has arrived
+                                    if (e.stage === 3) {
+                                        window.Echo.leave('order.' + e.orderId);
+                                        activeTrackingOrderId = null;
+                                        showToast('Paket Anda telah sampai! Terima kasih telah menggunakan layanan kami.', 'success');
+                                    }
+                                });
                         }
                     } else {
-                        if (trackingInterval) {
-                            clearInterval(trackingInterval);
-                            trackingInterval = null;
+                        if (window.Echo && activeTrackingOrderId) {
+                            window.Echo.leave('order.' + activeTrackingOrderId);
                         }
                         activeTrackingOrderId = null;
 
@@ -1026,9 +1059,8 @@
                         }, 50);
                     }
                 } catch (error) {
-                    if (trackingInterval) {
-                        clearInterval(trackingInterval);
-                        trackingInterval = null;
+                    if (window.Echo && activeTrackingOrderId) {
+                        window.Echo.leave('order.' + activeTrackingOrderId);
                     }
                     activeTrackingOrderId = null;
 
@@ -1041,64 +1073,6 @@
                 
                 searchBtn.innerHTML = originalBtnContent;
             }, 300);
-        }
-
-        async function pollActiveTracking() {
-            if (!activeTrackingOrderId) return;
-            try {
-                const response = await fetch(`/track/status/${activeTrackingOrderId}`);
-                const res = await response.json();
-
-                if (response.ok) {
-                    document.getElementById('res_status').innerText = res.data.status_pengiriman;
-                    
-                    const stagesMap = ['Dikemas', 'Diperjalanan', 'Kurir', 'Arrived'];
-                    document.getElementById('res_badge').innerText = stagesMap[res.data.stage] || res.data.status_pengiriman;
-                    
-                    
-                    if (res.data.driver_name || res.data.driver_id) {
-                        document.getElementById('res_driver_label').innerText = 'Kurir Ditugaskan';
-                        document.getElementById('res_driver_id').innerHTML = res.data.driver_name || res.data.driver_id;
-                        
-                        document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-indigo-50/60 text-indigo-650 flex items-center justify-center shrink-0 border border-slate-200/40 transition-colors duration-300';
-                        document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />';
-                        document.getElementById('res_driver_icon').classList.remove('animate-spin', 'text-amber-500');
-                        document.getElementById('res_driver_icon').classList.add('text-indigo-650');
-                    } else {
-                        document.getElementById('res_driver_label').innerText = 'Status Penugasan';
-                        document.getElementById('res_driver_id').innerHTML = '<span class="text-amber-600 font-extrabold flex items-center gap-1.5">Mencari Kurir... <span class="flex h-1.5 w-1.5 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span></span></span>';
-                        
-                        document.getElementById('res_driver_icon_wrap').className = 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full bg-amber-50/60 text-amber-500 flex items-center justify-center shrink-0 border border-amber-200/40 transition-colors duration-300';
-                        document.getElementById('res_driver_icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />';
-                        document.getElementById('res_driver_icon').classList.remove('text-indigo-650');
-                        document.getElementById('res_driver_icon').classList.add('animate-spin', 'text-amber-500');
-                    }
-                    
-                    const date = new Date(res.data.terakhir_diupdate);
-                    document.getElementById('res_time').innerText = date.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
-                    document.getElementById('res_badge_time').innerText = `Update: ${date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
-                    document.getElementById('res_eta').innerText = `${res.data.eta}`;
-
-                    updateTimeline(res.data.stage);
-
-                    // Update Map & Routing secara dinamis
-                    if (res.data.lat && res.data.lng) {
-                        destination = [res.data.lat, res.data.lng];
-                        initializeOrUpdateMap(res.data.lat, res.data.lng, false);
-                        detectAndDrawRoute();
-                    }
-
-                    // Stop polling if order has arrived
-                    if (res.data.stage === 3) {
-                        clearInterval(trackingInterval);
-                        trackingInterval = null;
-                        activeTrackingOrderId = null;
-                        showToast('Paket Anda telah sampai! Terima kasih telah menggunakan layanan kami.', 'success');
-                    }
-                }
-            } catch (error) {
-                console.error('Error polling tracking status:', error);
-            }
         }
 
         function updateTimeline(stage) {

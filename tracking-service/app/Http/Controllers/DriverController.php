@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\Tracking;
+use App\Models\Notification;
+use App\Events\OrderLocationUpdated;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class DriverController extends Controller
@@ -15,82 +18,124 @@ class DriverController extends Controller
     {
         $driverIdString = 'Driver-' . Auth::id();
 
-        // 1. Active Tasks (Assigned to this driver, not completed yet)
-        $activeTasks = DB::table('orders')
-            ->join('trackings', 'orders.order_id', '=', 'trackings.order_id')
-            ->where('trackings.driver_id', '=', $driverIdString)
-            ->where('trackings.status', 'NOT LIKE', '%diterima%')
-            ->where('trackings.status', 'NOT LIKE', '%selesai%')
-            ->where('trackings.status', 'NOT LIKE', '%delivered%')
-            ->select('orders.*', 'trackings.status as tracking_status', 'trackings.latitude', 'trackings.longitude')
-            ->orderBy('orders.created_at', 'desc')
-            ->get();
+        // 1. Pending & Active Tasks (Assigned to this driver, not completed yet)
+        $pendingTasks = Order::whereHas('tracking', function($query) use ($driverIdString) {
+            $query->where('driver_id', $driverIdString)
+                  ->where('status', 'NOT LIKE', '%diterima%')
+                  ->where('status', 'NOT LIKE', '%selesai%')
+                  ->where('status', 'NOT LIKE', '%delivered%');
+        })
+        ->with('tracking')
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($order) {
+            $order->tracking_status = $order->tracking->status;
+            return $order;
+        });
 
-        // 2. Completed Tasks (Assigned to this driver, completed/delivered)
-        $completedTasks = DB::table('orders')
-            ->join('trackings', 'orders.order_id', '=', 'trackings.order_id')
-            ->where('trackings.driver_id', '=', $driverIdString)
-            ->where(function($query) {
-                $query->where('trackings.status', 'LIKE', '%diterima%')
-                      ->orWhere('trackings.status', 'LIKE', '%selesai%')
-                      ->orWhere('trackings.status', 'LIKE', '%delivered%');
-            })
-            ->select('orders.*', 'trackings.status as tracking_status')
-            ->orderBy('orders.created_at', 'desc')
-            ->get();
+        // 2. Active Tasks (Assigned to this driver, confirmed, not completed yet)
+        $activeTasks = Order::whereHas('tracking', function($query) use ($driverIdString) {
+            $query->where('driver_id', $driverIdString)
+                  ->where('status', 'NOT LIKE', '%diterima%')
+                  ->where('status', 'NOT LIKE', '%selesai%')
+                  ->where('status', 'NOT LIKE', '%delivered%')
+                  ->where('status', '!=', 'Menunggu Konfirmasi Driver');
+        })
+        ->with('tracking')
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($order) {
+            $order->tracking_status = $order->tracking->status;
+            $order->latitude = $order->tracking->latitude;
+            $order->longitude = $order->tracking->longitude;
+            return $order;
+        });
 
-        // 3. Available Tasks (Paid orders, not assigned to this driver yet, and not completed)
-        $availableTasks = DB::table('orders')
-            ->join('trackings', 'orders.order_id', '=', 'trackings.order_id')
-            ->where('orders.payment_status', 'PAID')
-            ->where(function($query) use ($driverIdString) {
-                $query->whereNull('trackings.driver_id')
-                      ->orWhere('trackings.driver_id', '!=', $driverIdString);
-            })
-            ->where('trackings.status', 'NOT LIKE', '%diterima%')
-            ->where('trackings.status', 'NOT LIKE', '%selesai%')
-            ->where('trackings.status', 'NOT LIKE', '%delivered%')
-            ->select('orders.*', 'trackings.status as tracking_status', 'trackings.driver_id as current_driver_id')
-            ->orderBy('orders.created_at', 'desc')
-            ->get();
+        // 3. Completed Tasks (Assigned to this driver, completed/delivered)
+        $completedTasks = Order::whereHas('tracking', function($query) use ($driverIdString) {
+            $query->where('driver_id', $driverIdString)
+                  ->where(function($q) {
+                      $q->where('status', 'LIKE', '%diterima%')
+                        ->orWhere('status', 'LIKE', '%selesai%')
+                        ->orWhere('status', 'LIKE', '%delivered%');
+                  });
+        })
+        ->with('tracking')
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($order) {
+            $order->tracking_status = $order->tracking->status;
+            return $order;
+        });
 
-        return view('driver.dashboard', compact('activeTasks', 'completedTasks', 'availableTasks'));
+        // 4. Available Tasks (No longer used in Absolute Admin Allocation)
+        $availableTasks = collect();
+
+        return view('driver.dashboard', compact('pendingTasks', 'activeTasks', 'completedTasks', 'availableTasks'));
     }
 
     /**
-     * Claim an available paid shipping task.
+     * Accept a pending task assigned by Admin.
      */
-    public function claimTask(Request $request, $order_id)
+    public function acceptTask(Request $request, $order_id)
     {
         $driverIdString = 'Driver-' . Auth::id();
 
-        // Update driver_id in trackings
-        $updated = DB::table('trackings')
-            ->where('order_id', $order_id)
+        // Update tracking status to active
+        $updated = Tracking::where('order_id', $order_id)
+            ->where('driver_id', $driverIdString)
+            ->where('status', 'Menunggu Konfirmasi Driver')
             ->update([
-                'driver_id' => $driverIdString,
                 'status' => 'Driver Terpilih - Bersiap Meluncur',
                 'terakhir_diupdate' => now(),
-                'updated_at' => now()
             ]);
 
         if ($updated) {
-            // Fetch order info to create a customer notification
-            $order = DB::table('orders')->where('order_id', $order_id)->first();
+            $order = Order::where('order_id', $order_id)->first();
             if ($order) {
-                DB::table('notifications')->insert([
+                // Send notification to customer/user that driver accepted the task
+                Notification::create([
                     'user_id' => $order->user_id,
                     'title' => 'Kurir Ditugaskan',
-                    'body' => "Kurir " . Auth::user()->name . " telah mengambil tugas pengiriman #{$order->order_id} Anda dan sedang bersiap meluncur.",
+                    'body' => "Kurir " . Auth::user()->name . " telah mengonfirmasi pengiriman #{$order->order_id} Anda dan sedang bersiap meluncur.",
                     'read_at' => null,
-                    'created_at' => now(),
-                    'updated_at' => now()
                 ]);
             }
-            return redirect()->route('driver.dashboard')->with('success', 'Tugas berhasil diambil!');
+
+            // Dispatch WebSocket Event (OrderLocationUpdated)
+            $tracking = Tracking::where('order_id', $order_id)->first();
+            if ($tracking) {
+                $stageAndEta = $this->getTrackingStageAndEta($tracking->status, $tracking->updated_at);
+                event(new OrderLocationUpdated(
+                    $tracking->order_id,
+                    Auth::user()->name,
+                    $tracking->status,
+                    $tracking->latitude ?? -6.200000,
+                    $tracking->longitude ?? 106.816666,
+                    $stageAndEta['stage'],
+                    $stageAndEta['eta'],
+                    $tracking->updated_at->toIso8601String()
+                ));
+            }
+
+            return response()->json([
+                'status' => 'Success',
+                'message' => 'Tugas pengiriman berhasil diterima!'
+            ]);
         }
 
-        return redirect()->route('driver.dashboard')->with('error', 'Gagal mengambil tugas, silakan coba lagi.');
+        return response()->json([
+            'status' => 'Error',
+            'message' => 'Gagal menerima tugas pengiriman.'
+        ], 500);
+    }
+
+    /**
+     * Claim an available paid shipping task (Disabled in Absolute Admin Allocation).
+     */
+    public function claimTask(Request $request, $order_id)
+    {
+        return redirect()->route('driver.dashboard')->with('error', 'Fitur klaim mandiri dinonaktifkan. Seluruh tugas ditunjuk langsung oleh Admin.');
     }
 
     /**
@@ -105,17 +150,15 @@ class DriverController extends Controller
         $status = $request->input('status');
         $driverIdString = 'Driver-' . Auth::id();
 
-        $updated = DB::table('trackings')
-            ->where('order_id', $order_id)
+        $updated = Tracking::where('order_id', $order_id)
             ->where('driver_id', $driverIdString)
             ->update([
                 'status' => $status,
                 'terakhir_diupdate' => now(),
-                'updated_at' => now()
             ]);
 
         if ($updated) {
-            $order = DB::table('orders')->where('order_id', $order_id)->first();
+            $order = Order::where('order_id', $order_id)->first();
             if ($order) {
                 // Determine appropriate notification title based on status
                 $title = 'Status Pengiriman Diperbarui';
@@ -123,14 +166,28 @@ class DriverController extends Controller
                     $title = 'Paket Selesai Dikirim';
                 }
 
-                DB::table('notifications')->insert([
+                Notification::create([
                     'user_id' => $order->user_id,
                     'title' => $title,
                     'body' => "Paket #{$order->order_id} Anda berstatus: {$status}.",
                     'read_at' => null,
-                    'created_at' => now(),
-                    'updated_at' => now()
                 ]);
+            }
+
+            // Dispatch WebSocket Event
+            $tracking = Tracking::where('order_id', $order_id)->first();
+            if ($tracking) {
+                $stageAndEta = $this->getTrackingStageAndEta($tracking->status, $tracking->updated_at);
+                event(new OrderLocationUpdated(
+                    $tracking->order_id,
+                    Auth::user()->name,
+                    $tracking->status,
+                    $tracking->latitude,
+                    $tracking->longitude,
+                    $stageAndEta['stage'],
+                    $stageAndEta['eta'],
+                    $tracking->updated_at->toIso8601String()
+                ));
             }
 
             return response()->json([
@@ -157,17 +214,31 @@ class DriverController extends Controller
 
         $driverIdString = 'Driver-' . Auth::id();
 
-        $updated = DB::table('trackings')
-            ->where('order_id', $order_id)
+        $updated = Tracking::where('order_id', $order_id)
             ->where('driver_id', $driverIdString)
             ->update([
                 'latitude' => $request->input('latitude'),
                 'longitude' => $request->input('longitude'),
                 'terakhir_diupdate' => now(),
-                'updated_at' => now()
             ]);
 
         if ($updated) {
+            // Dispatch WebSocket Event
+            $tracking = Tracking::where('order_id', $order_id)->first();
+            if ($tracking) {
+                $stageAndEta = $this->getTrackingStageAndEta($tracking->status, $tracking->updated_at);
+                event(new OrderLocationUpdated(
+                    $tracking->order_id,
+                    Auth::user()->name,
+                    $tracking->status,
+                    $tracking->latitude,
+                    $tracking->longitude,
+                    $stageAndEta['stage'],
+                    $stageAndEta['eta'],
+                    $tracking->updated_at->toIso8601String()
+                ));
+            }
+
             return response()->json([
                 'status' => 'Success',
                 'message' => 'Lokasi GPS pengiriman berhasil diperbarui.'
@@ -178,5 +249,50 @@ class DriverController extends Controller
             'status' => 'Error',
             'message' => 'Gagal memperbarui lokasi GPS.'
         ], 500);
+    }
+
+    /**
+     * Map shipping status string to 4 stages and calculate smart ETA dynamically relative to current time.
+     */
+    private function getTrackingStageAndEta($status, $updatedAt)
+    {
+        $statusLower = strtolower($status);
+        $now = time();
+        
+        $stage = 0; // 0: Dikemas, 1: Diperjalanan, 2: Kurir Menuju Lokasi, 3: Diterima
+        $eta = '';
+        
+        if (strpos($statusLower, 'diterima') !== false || strpos($statusLower, 'selesai') !== false || strpos($statusLower, 'delivered') !== false) {
+            $stage = 3;
+            $eta = 'Paket telah diterima';
+        } elseif (strpos($statusLower, 'menuju lokasi') !== false || strpos($statusLower, 'pick up') !== false) {
+            $stage = 2;
+            // Kurir menuju lokasi: ETA is 30 - 90 minutes from now
+            $startEta = date('H:i', $now + 1800); // +30 mins
+            $endEta = date('H:i', $now + 5400);   // +90 mins
+            $eta = "Hari ini pukul {$startEta} - {$endEta}";
+        } elseif (strpos($statusLower, 'perjalanan') !== false || strpos($statusLower, 'transit') !== false || strpos($statusLower, 'kirim') !== false || strpos($statusLower, 'driver terpilih') !== false || strpos($statusLower, 'meluncur') !== false) {
+            $stage = 1;
+            // Diperjalanan: ETA is today (e.g. 2 - 4 hours from now)
+            $startEta = date('H:i', $now + 7200); // +2 hours
+            $endEta = date('H:i', $now + 14400);  // +4 hours
+            
+            // If it's already late night (e.g. after 8 PM), ETA is tomorrow morning
+            if (date('H', $now) >= 20) {
+                $eta = "Besok pukul 09:00 - 11:30";
+            } else {
+                $eta = "Hari ini pukul {$startEta} - {$endEta}";
+            }
+        } else {
+            // Default / Dikemas / Diproses
+            $stage = 0;
+            // Dikemas: ETA is tomorrow morning/afternoon
+            $eta = "Besok pukul 10:00 - 12:30";
+        }
+
+        return [
+            'stage' => $stage,
+            'eta' => $eta
+        ];
     }
 }

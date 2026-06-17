@@ -69,6 +69,12 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            // Prevent redirecting to API endpoints (which happens if session expired during background polling)
+            $intended = session()->get('url.intended');
+            if ($intended && str_contains($intended, '/api/')) {
+                session()->forget('url.intended');
+            }
+
             // Redirect based on role
             return redirect()->intended(strtolower($user->role) . '/dashboard');
         }
@@ -118,6 +124,40 @@ class AuthController extends Controller
         Auth::login($user);
 
         return redirect()->route('customer.dashboard');
+    }
+
+    /**
+     * Show Driver Registration Form
+     */
+    public function showDriverRegister()
+    {
+        return view('auth.driver-register');
+    }
+
+    /**
+     * Handle Driver Registration Submission
+     */
+    public function driverRegister(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'password' => Hash::make($validated['password']),
+            'role' => User::ROLE_DRIVER,
+            'status' => User::STATUS_INACTIVE, // Registered drivers are inactive until verified by Admin
+        ]);
+
+        Auth::login($user);
+
+        return redirect()->route('driver.dashboard');
     }
 
     /**

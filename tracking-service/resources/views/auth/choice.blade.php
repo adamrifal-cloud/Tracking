@@ -50,7 +50,7 @@
             </a>
 
             <!-- Vendor -->
-            <a href="http://localhost:8002/login" class="group flex flex-row md:flex-col items-center bg-white rounded-full md:rounded-3xl p-2 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
+            <a href="http://localhost:8002/vendor/login" class="group flex flex-row md:flex-col items-center bg-white rounded-full md:rounded-3xl p-2 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
                 <div class="absolute inset-0 bg-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div class="relative w-14 h-14 md:w-24 md:h-24 flex items-center justify-center bg-orange-100 text-orange-600 rounded-full shrink-0 z-10 shadow-inner md:mb-6">
                     <svg class="w-6 h-6 md:w-12 md:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
@@ -65,7 +65,7 @@
             </a>
 
             <!-- Admin -->
-            <a href="http://localhost:8002/login" class="group flex flex-row md:flex-col items-center bg-white rounded-full md:rounded-3xl p-2 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
+            <a href="http://localhost:8002/admin/login" class="group flex flex-row md:flex-col items-center bg-white rounded-full md:rounded-3xl p-2 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
                 <div class="absolute inset-0 bg-red-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div class="relative w-14 h-14 md:w-24 md:h-24 flex items-center justify-center bg-red-100 text-red-600 rounded-full shrink-0 z-10 shadow-inner md:mb-6">
                     <svg class="w-6 h-6 md:w-12 md:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>

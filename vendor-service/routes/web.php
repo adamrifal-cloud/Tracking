@@ -1,47 +1,55 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\VendorAuthController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\VendorDashboardController;
 use App\Jobs\SendDriverAllocation;
 
-// Redirect root to dashboard based on role
-Route::get('/', function () {
-    if (auth()->check()) {
-        if (auth()->user()->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('vendor.dashboard');
-    }
-    return redirect()->route('login');
-});
+// Redirect root to dashboard based on role or to a default login
+Route::get('/', [VendorDashboardController::class, 'rootRedirect']);
 
-// Auth Routes (Guest)
+// Admin Auth Routes
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+    Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
+    
+    Route::get('/vendor/login', [VendorAuthController::class, 'showLogin'])->name('vendor.login');
+    Route::post('/vendor/login', [VendorAuthController::class, 'login'])->name('vendor.login.post');
 });
 
-// Protected Routes (Admin / Vendor)
-Route::middleware('auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Protected Admin Routes
+Route::middleware(['auth', 'is_admin'])->group(function () {
+    Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/vendors', [AdminDashboardController::class, 'vendorsPage'])->name('admin.vendors.index');
+    Route::delete('/admin/orders/{order_id}', [AdminDashboardController::class, 'destroyOrder'])->name('admin.orders.destroy');
+    Route::get('/admin/unread-orders', [AdminDashboardController::class, 'getUnallocatedOrders'])->name('admin.unread-orders');
 
-    // Admin Routes
-    Route::get('/admin/dashboard', [App\Http\Controllers\AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    
-    // Vendor Routes
-    Route::get('/vendor/dashboard', [App\Http\Controllers\VendorDashboardController::class, 'index'])->name('vendor.dashboard');
+    Route::post('/admin/allocate', [AdminDashboardController::class, 'allocateDriver'])->name('allocate.post');
 
-    // API to send the job
-    Route::post('/allocate', function (\Illuminate\Http\Request $request) {
-        $validated = $request->validate([
-            'order_id' => 'required|string',
-            'driver_id' => 'required|integer',
-            'driver_name' => 'required|string',
-            'vendor_name' => 'required|string',
-        ]);
+    Route::post('/admin/vendors/{vendor}/verify', [AdminDashboardController::class, 'verifyVendor'])->name('admin.vendors.verify');
+});
 
-        dispatch(new SendDriverAllocation($validated))->onQueue('driver-allocations');
+// Protected Vendor Routes
+Route::middleware(['auth', 'is_vendor'])->group(function () {
+    Route::post('/vendor/logout', [VendorAuthController::class, 'logout'])->name('vendor.logout');
+    Route::get('/vendor/dashboard', [VendorDashboardController::class, 'index'])->name('vendor.dashboard');
 
-        return response()->json(['message' => 'Tugas ' . $validated['order_id'] . ' berhasil dikirim ke antrean kurir.']);
-    })->name('allocate.post');
+    // Vendor Profile Routes
+    Route::get('/vendor/profile', [\App\Http\Controllers\VendorProfileController::class, 'index'])->name('vendor.profile');
+    Route::post('/vendor/profile', [\App\Http\Controllers\VendorProfileController::class, 'update'])->name('vendor.profile.update');
+
+
+
+    // Driver Routes
+    Route::get('/vendor/drivers', [VendorDashboardController::class, 'driversPage'])->name('vendor.drivers.index');
+    Route::post('/vendor/drivers', [VendorDashboardController::class, 'storeDriver'])->name('vendor.drivers.store');
+    Route::put('/vendor/drivers/{id}', [VendorDashboardController::class, 'updateDriver'])->name('vendor.drivers.update');
+    Route::delete('/vendor/drivers/{id}', [VendorDashboardController::class, 'destroyDriver'])->name('vendor.drivers.destroy');
+
+    // Notification Routes
+    Route::get('/vendor/notifications', [VendorDashboardController::class, 'notificationsPage'])->name('vendor.notifications.index');
+    Route::post('/vendor/notifications/{notification}/read', [VendorDashboardController::class, 'readNotification'])->name('vendor.notifications.read');
 });

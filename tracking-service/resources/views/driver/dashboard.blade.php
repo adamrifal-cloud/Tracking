@@ -2,6 +2,7 @@
     $activeTasks = $activeTasks ?? collect();
     $completedTasks = $completedTasks ?? collect();
     $availableTasks = $availableTasks ?? collect();
+    $pendingTasks = $pendingTasks ?? collect();
 @endphp
 <x-app-layout>
     <!-- Leaflet CSS & JS for Live Map -->
@@ -275,46 +276,77 @@
                     </p>
                 </div>
 
-                <!-- Available Tasks List -->
-                <div class="bg-white/60 backdrop-blur-md rounded-[2rem] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-200/50 mt-2 transition-colors duration-300">
-                    <div class="flex justify-between items-center mb-4 pl-1">
-                        <h3 class="text-sm font-black text-slate-800 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-amber-500 shadow-sm"></span>
-                            Tugas Tersedia
-                        </h3>
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 text-[10px] font-black">{{ count($availableTasks) }}</span>
+                @if(Auth::user()->status !== 'active')
+                    <div class="p-5 bg-amber-500/10 border border-amber-500/35 rounded-3xl text-slate-800 dark:text-amber-200 mt-2 flex flex-col gap-3 shadow-md">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-sm font-black text-slate-800 leading-tight">Akun Menunggu Verifikasi</h3>
+                                <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed font-semibold">Lengkapi No. SIM & Plat Nomor di profil Anda agar admin dapat melakukan verifikasi.</p>
+                            </div>
+                        </div>
+                        <button onclick="toggleMobileSettings(); switchDrawerToEdit();" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-sm transition cursor-pointer text-center">
+                            Lengkapi Profil Sekarang
+                        </button>
                     </div>
+                @endif
 
-                    <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                        @forelse($availableTasks as $task)
-                            <div class="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200 flex flex-col gap-4 group hover:shadow-md hover:border-emerald-100">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <span class="text-xs font-black text-slate-800">{{ $task->order_id }}</span>
-                                            <span class="px-2 py-0.5 rounded text-[8px] font-black tracking-widest uppercase bg-amber-50 text-amber-600 border border-amber-200/50">Siap Klaim</span>
-                                        </div>
-                                        <p class="text-[10px] text-slate-500 font-medium leading-relaxed max-w-[200px]">Tujuan: {{ explode(',', $task->receiver_address)[0] }}</p>
-                                    </div>
+                <!-- Removed Completed Tasks History -->
+
+                <!-- Panel Daftar Tugas (Tugas Masuk & Aktif) -->
+                <div class="mt-8 space-y-4">
+                    <h3 class="text-[10px] font-black text-slate-700 tracking-widest uppercase pl-1">
+                        Daftar Tugas Anda
+                    </h3>
+                    <div class="space-y-4">
+                        @forelse($pendingTasks as $task)
+                            @php
+                                $isPending = $task->tracking_status === 'Menunggu Konfirmasi Driver';
+                                $borderClass = $isPending ? 'border-amber-200 shadow-amber-500/5 bg-amber-50/10' : 'border-emerald-200 shadow-emerald-500/5 bg-emerald-50/10';
+                                $badgeClass = $isPending ? 'text-amber-600 bg-amber-50 border-amber-500/10' : 'text-emerald-600 bg-emerald-50 border-emerald-500/10';
+                                $badgeText = $isPending ? 'Menunggu Konfirmasi' : 'Tugas Aktif';
+                            @endphp
+                            <div class="w-full p-5 bg-white border {{ $borderClass }} rounded-[1.5rem] text-left shadow-md flex flex-col gap-4 relative overflow-hidden group transition duration-300">
+                                <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full {{ $isPending ? 'bg-amber-50/30' : 'bg-emerald-50/30' }} group-hover:scale-110 transition duration-300 pointer-events-none"></div>
+                                <div class="flex items-center justify-between min-w-0">
+                                    <span class="inline-block text-[8px] font-black {{ $badgeClass }} border px-2.5 py-1 rounded-md uppercase leading-none">{{ $badgeText }}</span>
+                                    <span class="text-[9px] text-slate-400 font-bold">#{{ $task->order_id }}</span>
                                 </div>
-                                <form method="POST" action="{{ route('driver.task.claim', $task->order_id) }}" class="m-0">
-                                    @csrf
-                                    <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg hover:shadow-emerald-500/20">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                        Ambil Tugas
-                                    </button>
-                                </form>
+                                <div class="min-w-0 space-y-1 z-10">
+                                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tujuan Penerima</span>
+                                    <h4 class="text-sm font-black text-slate-800 leading-none truncate">{{ $task->receiver_name }}</h4>
+                                    <p class="text-[11px] text-slate-500 font-semibold truncate mt-1.5">{{ $task->receiver_address }}</p>
+                                    <p class="text-[9px] text-slate-400 mt-2.5 font-bold">Paket: {{ $task->package_description }} ({{ $task->package_weight }} kg)</p>
+                                </div>
+                                <div class="z-10 flex gap-2 pt-1">
+                                    @if($isPending)
+                                        <button onclick="acceptIncomingTask('{{ $task->order_id }}', this)" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-750 text-white text-[11px] font-black shadow-lg shadow-emerald-500/20 transition cursor-pointer text-center flex items-center justify-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                            Terima Tugas
+                                        </button>
+                                    @else
+                                        <div class="flex-1 py-3 rounded-xl bg-emerald-50 border border-emerald-250 text-emerald-700 text-[11px] font-black text-center flex items-center justify-center gap-1.5 pointer-events-none select-none">
+                                            <span class="relative flex h-2 w-2">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                            </span>
+                                            Sedang Diantar
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         @empty
-                            <div class="text-center py-8 text-slate-400 text-xs border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center gap-2">
-                                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                Belum ada tugas baru.
+                            <div class="w-full p-6 bg-white/60 border border-slate-200 rounded-[1.5rem] text-center shadow-md flex flex-col items-center justify-center gap-2">
+                                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                </svg>
+                                <p class="text-[11px] text-slate-400 font-bold">Belum ada tugas diberikan.</p>
                             </div>
                         @endforelse
                     </div>
                 </div>
-
-                <!-- Removed Completed Tasks History -->
             </div>
         </div>
 
@@ -401,15 +433,39 @@
                 @else
                     <!-- Empty State -->
                     <div class="bg-white/80 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 border border-slate-200/60 shadow-[0_15px_40px_rgba(0,0,0,0.05)] h-full min-h-[350px] sm:min-h-[450px] flex flex-col justify-center items-center text-center transition-colors duration-300 w-full">
-                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-emerald-100 to-teal-50 text-emerald-400 flex items-center justify-center shadow-inner mb-6 sm:mb-8 border border-emerald-200/50">
-                            <!-- Radar pulse animation for empty state -->
-                            <span class="absolute flex h-20 w-20 sm:h-24 sm:w-24">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20"></span>
-                            </span>
-                            <svg class="w-8 h-8 sm:w-10 sm:h-10 relative z-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-emerald-100 to-teal-50 text-emerald-400 flex items-center justify-center shadow-inner mb-6 sm:mb-8 border border-emerald-200/50 relative">
+                            @if(Auth::user()->status === 'active')
+                                <!-- Radar pulse animation for empty state -->
+                                <span class="absolute flex h-20 w-20 sm:h-24 sm:w-24">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20"></span>
+                                </span>
+                                <svg class="w-8 h-8 sm:w-10 sm:h-10 relative z-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                            @else
+                                <svg class="w-8 h-8 sm:w-10 sm:h-10 text-amber-500 relative z-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25z" /></svg>
+                            @endif
                         </div>
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-2 sm:mb-3 tracking-tight">Memantau Area...</h3>
-                        <p class="text-slate-500 text-xs sm:text-sm font-medium max-w-[280px] sm:max-w-sm leading-relaxed">Sistem pelacakan GPS Anda aktif. Silakan ambil salah satu pengiriman yang tersedia pada panel <strong>Tugas Tersedia</strong> untuk memulai perjalanan.</p>
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-2 sm:mb-3 tracking-tight">
+                            @if(Auth::user()->status === 'active')
+                                @if(count($pendingTasks) > 0)
+                                    Konfirmasi Tugas Masuk
+                                @else
+                                    Memantau Area...
+                                @endif
+                            @else
+                                Akun Belum Aktif
+                            @endif
+                        </h3>
+                        <p class="text-slate-500 text-xs sm:text-sm font-medium max-w-[280px] sm:max-w-sm leading-relaxed">
+                            @if(Auth::user()->status === 'active')
+                                @if(count($pendingTasks) > 0)
+                                    Anda memiliki penugasan baru dari Admin. Silakan klik tombol <strong>Terima Tugas</strong> pada panel sebelah kiri untuk memulai pengiriman.
+                                @else
+                                    Sistem pelacakan GPS Anda aktif. Menunggu penugasan pengiriman baru dari Admin.
+                                @endif
+                            @else
+                                Akun Anda belum aktif. Silakan lengkapi data profil Anda (Nomor SIM & Plat Nomor Kendaraan) di panel profil agar admin dapat memverifikasi akun Anda.
+                            @endif
+                        </p>
                     </div>
                 @endif
             </div>
@@ -444,6 +500,21 @@
                     <p id="drawerAddress" class="text-xs font-semibold text-slate-700 leading-relaxed pl-6 border-l-2 border-emerald-200">
                         {{ Auth::user()->address ?? 'Alamat operasional belum diatur.' }}
                     </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/40 shadow-sm transition-colors duration-300">
+                        <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 pl-1">Nomor SIM</span>
+                        <p id="drawerLicense" class="text-xs font-black text-slate-800 pl-1">
+                            {{ Auth::user()->license_number ?? 'Belum diatur' }}
+                        </p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/40 shadow-sm transition-colors duration-300">
+                        <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 pl-1">Plat Nomor</span>
+                        <p id="drawerVehicle" class="text-xs font-black text-slate-800 pl-1">
+                            {{ Auth::user()->vehicle_number ?? 'Belum diatur' }}
+                        </p>
+                    </div>
                 </div>
 
                 <button onclick="switchDrawerToEdit()" class="w-full flex items-center justify-between p-5 bg-white hover:bg-slate-50 rounded-2xl transition duration-300 text-left cursor-pointer border border-slate-200 shadow-sm hover:shadow-md group transition-colors duration-300">
@@ -486,6 +557,14 @@
                         <div>
                             <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 pl-1">Alamat Operasional Utama</label>
                             <textarea id="editAddress" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition">{{ Auth::user()->address ?? '' }}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 pl-1">Nomor SIM</label>
+                            <input type="text" id="editLicense" value="{{ Auth::user()->license_number ?? '' }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition" placeholder="Contoh: SIM-123456">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 pl-1">Plat Nomor Kendaraan</label>
+                            <input type="text" id="editVehicle" value="{{ Auth::user()->vehicle_number ?? '' }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition" placeholder="Contoh: B 1234 ABC">
                         </div>
                     </div>
                     
@@ -701,13 +780,15 @@
             const email = document.getElementById('editEmail').value;
             const phone = document.getElementById('editPhone').value;
             const address = document.getElementById('editAddress').value;
+            const license_number = document.getElementById('editLicense').value;
+            const vehicle_number = document.getElementById('editVehicle').value;
 
             try {
                 const token = document.querySelector('meta[name="csrf-token"]').content;
                 const response = await fetch('/driver/profile/update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
-                    body: JSON.stringify({ name, email, phone, address })
+                    body: JSON.stringify({ name, email, phone, address, license_number, vehicle_number })
                 });
 
                 const data = await response.json();
@@ -717,6 +798,8 @@
                     document.getElementById('drawerEmail').innerText = data.data.email;
                     document.getElementById('drawerPhone').innerText = data.data.phone || 'Telepon belum diatur';
                     document.getElementById('drawerAddress').innerText = data.data.address || 'Alamat operasional belum diatur.';
+                    document.getElementById('drawerLicense').innerText = data.data.license_number || 'Belum diatur';
+                    document.getElementById('drawerVehicle').innerText = data.data.vehicle_number || 'Belum diatur';
                     
                     showToast(data.message, 'success');
                     switchDrawerToSummary();
@@ -731,7 +814,7 @@
             }
         }
 
-        // === Map & Update Logic ===
+        // === Map & Update Logic profile===
         @if(count($activeTasks) > 0)
             const orderId = '{{ $activeTask->order_id }}';
             const senderAddress = '{{ $activeTask->sender_address }}';
@@ -911,6 +994,38 @@
                 });
             }
         @endif
+
+        function acceptIncomingTask(id, btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...`;
+            btn.disabled = true;
+
+            const token = document.querySelector('meta[name="csrf-token"]').content;
+            fetch(`/driver/task/${id}/accept`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'Success') {
+                    showToast(data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Gagal menerima tugas.', 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                showToast('Koneksi terputus.', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
 
         // Toast logic
         function showToast(message, type = 'info') {

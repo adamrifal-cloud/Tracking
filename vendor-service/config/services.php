@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'tracking' => [
+        'url' => env('TRACKING_SERVICE_URL', 'http://tracking-service-app:8000'),
+    ],
+
 ];

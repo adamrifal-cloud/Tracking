@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\Tracking;
+use App\Models\RecentSearch;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class TrackingController extends Controller
 {
@@ -13,11 +16,11 @@ class TrackingController extends Controller
         $myOrders = [];
         
         if (auth()->check()) {
-            $recentSearches = \App\Models\RecentSearch::where('user_id', auth()->id())
+            $recentSearches = RecentSearch::where('user_id', auth()->id())
                                 ->orderBy('updated_at', 'desc')
                                 ->take(5)
                                 ->get();
-            $myOrders = \App\Models\Order::where('user_id', auth()->id())
+            $myOrders = Order::where('user_id', auth()->id())
                                 ->orderBy('created_at', 'desc')
                                 ->take(10)
                                 ->get();
@@ -29,7 +32,7 @@ class TrackingController extends Controller
     public function checkStatus($order_id)
     {
         // Cari data tracking terbaru di database berdasarkan Order ID
-        $tracking = DB::table('trackings')->where('order_id', $order_id)->first();
+        $tracking = Tracking::where('order_id', $order_id)->first();
 
         if (!$tracking) {
             return response()->json([
@@ -40,7 +43,7 @@ class TrackingController extends Controller
 
         // Save to recent searches if user is authenticated
         if (auth()->check()) {
-            \App\Models\RecentSearch::updateOrCreate(
+            RecentSearch::updateOrCreate(
                 ['user_id' => auth()->id(), 'order_id' => $tracking->order_id],
                 ['updated_at' => now()]
             );
@@ -53,7 +56,7 @@ class TrackingController extends Controller
         if ($tracking->driver_id) {
             if (strpos($tracking->driver_id, 'Driver-') === 0) {
                 $driverUserId = (int) substr($tracking->driver_id, 7);
-                $driverUser = DB::table('users')->where('id', $driverUserId)->first();
+                $driverUser = User::find($driverUserId);
                 if ($driverUser) {
                     $driverName = $driverUser->name;
                 } else {
@@ -132,7 +135,7 @@ class TrackingController extends Controller
      */
     public function deleteRecentSearch($id)
     {
-        $search = \App\Models\RecentSearch::where('id', $id)
+        $search = RecentSearch::where('id', $id)
                     ->where('user_id', auth()->id())
                     ->first();
         if ($search) {
@@ -146,7 +149,7 @@ class TrackingController extends Controller
      */
     public function clearRecentSearches()
     {
-        \App\Models\RecentSearch::where('user_id', auth()->id())->delete();
+        RecentSearch::where('user_id', auth()->id())->delete();
         return redirect()->route('track')->with('success', 'Semua riwayat pencarian berhasil dibersihkan.');
     }
 }

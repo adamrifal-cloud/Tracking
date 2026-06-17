@@ -185,4 +185,33 @@ class OrderController extends Controller
 
         return redirect()->route('track')->with('error', "Pesanan ini belum selesai atau dibatalkan, tidak dapat dihapus.");
     }
+
+    /**
+     * Store a simulated order via API.
+     */
+    public function storeApi(Request $request)
+    {
+        $orderId = 'ORD-' . str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+        $status = 'Dikemas';
+        
+        Tracking::create([
+            'order_id' => $orderId,
+            'driver_id' => null,
+            'status' => $status,
+            'terakhir_diupdate' => now(),
+        ]);
+
+        if (Auth::check()) {
+            \App\Models\RecentSearch::create([
+                'user_id' => Auth::id(),
+                'order_id' => $orderId,
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'Success',
+            'order_id' => $orderId,
+            'message' => 'Pesanan berhasil dibuat!'
+        ]);
+    }
 }

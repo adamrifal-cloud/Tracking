@@ -312,7 +312,7 @@
     "src": "node_modules/@fontsource/poppins/files/poppins-latin-ext-700-normal.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-C8g8ziVg.css",
+    "file": "assets/app-Bx5j1sIY.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -321,7 +321,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-UyRVujZY.js",
+    "file": "assets/app-DlK4Dz2i.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

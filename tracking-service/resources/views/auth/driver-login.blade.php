@@ -78,6 +78,12 @@
                     </div>
                 </form>
 
+                <div class="mt-8 text-center pb-8 md:pb-0">
+                    <p class="text-gray-600 text-sm">
+                        Belum punya akun? 
+                        <a href="{{ route('driver.register') }}" class="font-bold text-[#FFB703] hover:text-[#e5a403] transition-colors">Daftar di sini</a>
+                    </p>
+                </div>
             </div>
 
         </div>

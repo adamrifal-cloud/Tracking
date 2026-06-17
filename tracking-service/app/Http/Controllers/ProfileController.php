@@ -16,6 +16,8 @@ class ProfileController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'license_number' => 'nullable|string|max:50',
+            'vehicle_number' => 'nullable|string|max:50',
         ]);
 
         $user->update([
@@ -23,6 +25,8 @@ class ProfileController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'address' => $request->address,
+            'license_number' => $request->license_number,
+            'vehicle_number' => $request->vehicle_number,
         ]);
 
         return response()->json([
@@ -33,6 +37,8 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'address' => $user->address,
+                'license_number' => $user->license_number,
+                'vehicle_number' => $user->vehicle_number,
             ]
         ], 200);
     }

@@ -69,4 +69,22 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Vendor Profile relation
+     */
+    public function vendorProfile()
+    {
+        return $this->hasOne(VendorProfile::class, 'user_id');
+    }
+
+
+
+    /**
+     * Notifications relation
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
 }

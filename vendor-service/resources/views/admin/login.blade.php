@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor & Admin Login - Logistik App</title>
+    <title>Admin Login - Logistik App</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
@@ -32,52 +32,26 @@
 <body class="font-sans antialiased text-gray-900 bg-gray-100">
     <div class="min-h-screen flex flex-col md:flex-row bg-brand-900 md:bg-white w-full">
         
-        <!-- Left Panel (Top on Mobile, Left on Desktop) -->
+        <!-- Left Panel -->
         <div class="md:w-1/2 bg-brand-900 flex flex-col items-center justify-center pt-16 pb-20 md:py-12 px-8 relative overflow-hidden">
             
-            <!-- Back Button -->
-            <!-- We redirect back to the tracking-service choice portal -->
             <a href="http://localhost:8001/choice" class="absolute top-6 left-6 md:top-8 md:left-8 text-white hover:text-gray-300 transition-colors z-20">
                 <svg class="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
 
-            <!-- Decorative SVG for Desktop -->
-            <svg class="absolute top-0 right-0 w-3/4 h-auto opacity-10 hidden md:block" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#ffffff" d="M45.7,-76.1C58.9,-69.3,69.1,-55.3,77.3,-40.5C85.5,-25.7,91.7,-10.1,90.2,4.8C88.6,19.8,79.2,34.2,68.7,46.2C58.1,58.2,46.5,67.8,32.7,75.2C18.9,82.5,2.9,87.6,-12.3,86.2C-27.5,84.7,-41.8,76.6,-53.4,66.3C-64.9,56,-73.6,43.5,-79.8,29.3C-86,15.1,-89.7,-0.7,-86.3,-15.1C-82.9,-29.4,-72.4,-42.2,-59.8,-50.2C-47.1,-58.1,-32.4,-61.2,-18.8,-66.3C-5.1,-71.3,7.5,-78.4,22,-80.7C36.4,-83,50.7,-80.5,45.7,-76.1Z" transform="translate(100 100)" />
-            </svg>
-
-            <!-- The Logo (Aligned with Customer/Driver logo but colored differently) -->
-            <div class="logo-s mb-6 relative z-10 scale-90 md:scale-110">
-                <svg class="w-[120px] h-[120px] pin-icon drop-shadow-md" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Semicircles Group -->
-                    <g transform="translate(50, 50) rotate(-45)">
-                        <!-- Top-Left Semicircle -->
-                        <path d="M -40 0 A 40 40 0 0 1 40 0 Z" fill="#FFFFFF" transform="translate(0, -5)" opacity="0.9" />
-                        <!-- Bottom-Right Semicircle -->
-                        <path d="M -40 0 A 40 40 0 0 0 40 0 Z" fill="#FFFFFF" transform="translate(0, 5)" opacity="0.9" />
-                    </g>
-                    <!-- Map Pin Group (Colored Accent Blue for Admin/Vendor) -->
-                    <g transform="translate(50, 50)">
-                        <circle cx="0" cy="0" r="16" fill="#3A60C8" />
-                        <polygon points="-13.8,8 13.8,8 0,32" fill="#3A60C8" />
-                        <circle cx="0" cy="0" r="6.5" fill="#0A1128" />
-                    </g>
-                </svg>
-            </div>
-
             <div class="hidden md:block text-center text-white mt-8 z-10">
-                <h1 class="text-4xl font-bold mb-4">Portal Internal</h1>
-                <p class="text-lg text-brand-400 max-w-sm mx-auto">Masuk sebagai Admin atau Vendor untuk mengakses sistem manajemen logistik terpadu.</p>
+                <h1 class="text-4xl font-bold mb-4">Portal Admin Pusat</h1>
+                <p class="text-lg text-brand-400 max-w-sm mx-auto">Sistem Manajemen Logistik dan Validasi Dokumen.</p>
             </div>
         </div>
 
-        <!-- Right Panel (Bottom on Mobile, Right on Desktop) -->
+        <!-- Right Panel -->
         <div class="md:w-1/2 bg-white flex flex-col justify-center px-8 py-10 md:px-16 lg:px-24 rounded-t-[3rem] md:rounded-none -mt-10 md:mt-0 relative z-20 flex-1 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:shadow-none">
             
             <div class="max-w-md w-full mx-auto">
                 <div class="text-center md:text-left mb-10">
-                    <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Internal Login</h2>
-                    <p class="text-gray-500">Silakan masukkan kredensial korporat Anda</p>
+                    <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Admin Login</h2>
+                    <p class="text-gray-500">Silakan masukkan kredensial admin Anda</p>
                 </div>
 
                 @if ($errors->any())
@@ -90,11 +64,11 @@
                     </div>
                 @endif
 
-                <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
+                <form action="{{ route('admin.login.post') }}" method="POST" class="space-y-6">
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2 ml-4">Corporate Email</label>
-                        <input type="email" name="email" required placeholder="admin@vendor.com" value="{{ old('email') }}"
+                        <input type="email" name="email" required placeholder="admin@logistik.com" value="{{ old('email') }}"
                             class="w-full px-6 py-4 rounded-full bg-gray-50 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white border border-gray-200 transition-all font-medium">
                     </div>
                     <div>
@@ -105,14 +79,14 @@
 
                     <div class="pt-2">
                         <button type="submit" class="w-full py-4 rounded-full bg-brand-900 border-2 border-transparent text-white text-lg font-bold shadow-lg hover:shadow-xl hover:bg-brand-800 transition-all transform hover:-translate-y-0.5">
-                            Otorisasi Masuk
+                            Masuk sebagai Admin
                         </button>
                     </div>
                 </form>
 
                 <div class="mt-8 text-center">
                     <p class="text-gray-400 text-sm">
-                        &copy; {{ date('Y') }} Logistik App - Management System
+                        &copy; {{ date('Y') }} Logistik App - Admin Portal
                     </p>
                 </div>
             </div>
